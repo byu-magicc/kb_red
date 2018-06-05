@@ -32,6 +32,8 @@ private:
 
   // ROS
   ros::NodeHandle nh_, nh_private_;
+  message_filters::Subscriber<kb_utils::Servo_Command> cmd_sub_;
+  message_filters::Subscriber<kb_utils::Encoder> enc_sub_;
   ros::Subscriber pose_sub_;
   ros::Publisher state_pub_;
 

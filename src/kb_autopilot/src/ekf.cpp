@@ -5,7 +5,9 @@ namespace ekf
 
 EKF::EKF() :
   nh_(""),
-  nh_private_("~")
+  nh_private_("~"),
+  cmd_sub_(nh_, "/safety_pilot", 1),
+  enc_sub_(nh_, "/encoder", 1)
 {
   // retrieve parameters from ROS parameter server
   rosImportMatrix<double>(nh_, "x0", x_);
@@ -29,9 +31,7 @@ EKF::EKF() :
   H_pose_.block<3,3>(0,0) = Eigen::MatrixXd::Identity(3,3);
 
   // set up ROS subscribers
-  message_filters::Subscriber<kb_utils::Servo_Command> cmd_sub(nh_, "/safety_pilot", 1);
-  message_filters::Subscriber<kb_utils::Encoder> enc_sub(nh_, "/encoder", 1);
-  message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), cmd_sub, enc_sub);
+  message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), cmd_sub_, enc_sub_);
   sync.registerCallback(std::bind(&EKF::propCallback, this, std::placeholders::_1, std::placeholders::_2));
   pose_sub_ = nh_.subscribe("/pose", 1, &EKF::update, this);
 
