@@ -12,13 +12,13 @@
 #include <message_filters/sync_policies/approximate_time.h>
 
 #include "kb_utils/Encoder.h"
-#include "kb_utils/Command.h"
+#include "kb_utils/Servo_Command.h"
+
+typedef message_filters::sync_policies::ApproximateTime<kb_utils::Servo_Command, kb_utils::Encoder> MySyncPolicy;
 
 
 namespace ekf
 {
-
-typedef message_filters::sync_policies::ApproximateTime<Command, Encoder> MySyncPolicy;
 
 class EKF
 {
@@ -43,7 +43,7 @@ private:
   double t_prev_;
 
   // functions
-  void propCallback(const Command& msg, const Encoder& msg);
+  void propCallback(const kb_utils::Servo_CommandConstPtr& servo_msg, const kb_utils::EncoderConstPtr& encoder_msg);
   void update();
 
 };
