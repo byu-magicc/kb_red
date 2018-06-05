@@ -110,17 +110,22 @@ class Controller:
 
     	error = self.v_ref - v
 
-    	if self.v_dot < self.thresh:
-    	    self.integrator_v = self.integrator_v + dt / 2.0 * (error - self.prev_error_v)
+        self.integrator_v = self.integrator_v + dt / 2.0 * (error - self.prev_error_v)
     	self.v_dot = (2 * self.sigma - dt)/(2 * self.sigma + dt) * self.v_dot + 2.0 / (2 * self.sigma + dt) * (v - self.prev_v)
     	self.prev_v = v
 
     	u_unsat = self.Kp_v * error - self.Kd_v * self.v_dot + self.Ki_v * self.integrator_v
 
-    	self.v_command = u_unsat / self.Km_v
+    	u = u_unsat / self.Km_v
 
-    	if self.v_command > 1.0 or self.v_command < -1.0:
+    	if u > 1.0 or u < -1.0:
     	    self.v_command = 1.0 * np.sign(self.v_command)
+	else:
+	    self.v_command = u
+
+	#Anti wind up. Apply else where also
+	if self.Ki_v != 0.0:
+		self.integrator = self.integrator + dt/self.Ki_v * (self.v_command - u)
 
     	vel = Command()
     	vel.steer = 0.0
