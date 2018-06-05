@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rospy
 from kb_utils.msg import Command
 from nav_msgs.msg import Odometry
@@ -14,7 +16,7 @@ class Controller:
         # self.est_sub = rospy.Subscriber('odom', self.odometry_callback, queue_size = 1)
         self.est_sub = rospy.Subscriber('state', self.state_callback, queue_size = 1)   #will we be using the state message or odom from estimator?
         self.command_pub = rospy.Publisher('command', Command, queue_size = 1)
-	    self.enc_sub = rospy.Subscriber('encoder, self.encoder_callback, queue_size = 1)
+	self.enc_sub = rospy.Subscriber('encoder', self.encoder_callback, queue_size = 1)
 
         self.thresh = 0.5 #antiwind up threshold
 
@@ -125,7 +127,7 @@ class Controller:
 
 	#Anti wind up. Apply else where also
 	if self.Ki_v != 0.0:
-		self.integrator = self.integrator + dt/self.Ki_v * (self.v_command - u)
+	    self.integrator = self.integrator + dt/self.Ki_v * (self.v_command - u)
 
     	vel = Command()
     	vel.steer = 0.0
