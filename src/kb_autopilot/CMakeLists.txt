@@ -52,6 +52,9 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   State.msg
+  Controller_Commands.msg
+  Current_Path.msg
+  Waypoint.msg
 )
 
 ## Generate services in the 'srv' folder
