@@ -1,8 +1,5 @@
 ### ekf parameters ###
 
-car_length: 0.179 # meters
-rmin_left: 0.713 # meters
-rmin_right: 0.770 # meters
 x0: [10, # north
      10, # east
      0, # heading

@@ -8,11 +8,6 @@ EKF::EKF() :
   nh_private_("~")
 {
   // retrieve parameters from ROS parameter server
-  Eigen::Matrix<double,8,1> onevec; onevec.setOnes();
-  double car_length, rmin_left, rmin_right;
-  rosImportScalar<int>(nh_, "car_length", car_length, 0.179);
-  rosImportScalar<int>(nh_, "rmin_left", rmin_left, 0.7);
-  rosImportScalar<int>(nh_, "rmin_right", rmin_right, 0.7);
   rosImportMatrix<double>(nh_, "x0", x_);
   rosImportMatrix<double>(nh_, "P0", P_);
   rosImportMatrix<double>(nh_, "Qx", Qx_);
@@ -20,6 +15,7 @@ EKF::EKF() :
   rosImportMatrix<double>(nh_, "R_pose", R_pose_);
   rosImportScalar<double>(nh_, "R_v", R_v_, 1);
   rosImportMatrix<double>(nh_, "lambda", lambda_);
+  Eigen::Matrix<double,8,1> onevec; onevec.setOnes();
   Lambda_ = onevec*lambda_.transpose()+lambda_*onevec.transpose()-lambda_*lambda_.transpose();
 
   // other parameters and constants
