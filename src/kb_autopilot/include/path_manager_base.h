@@ -11,18 +11,17 @@
 #define PATH_MANAGER_BASE_H
 
 #include <ros/ros.h>
-#include <rosplane_msgs/State.h>
-#include <rosplane_msgs/Current_Path.h>
-#include <rosplane_msgs/Waypoint.h>
+#include <kb_autopilot/State.h>
+#include <kb_autopilot/Current_Path.h>
+#include <kb_autopilot/Waypoint.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <sensor_msgs/FluidPressure.h>
 #include <math.h>
 #include <Eigen/Eigen>
-#include <rosplane/ControllerConfig.h>
 
-namespace rosplane
+namespace kb_autopilot
 {
 class path_manager_base
 {
@@ -33,10 +32,10 @@ protected:
 
   struct waypoint_s
   {
-    float w[3];
-    float chi_d;
-    bool  chi_valid;
-    float Va_d;
+    float w[2];
+    // float chi_d;
+    // bool  chi_valid;
+    // float Va_d;
   };
 
   std::vector<waypoint_s> waypoints_;
@@ -47,17 +46,17 @@ protected:
   {
     float pn;               /** position north */
     float pe;               /** position east */
-    float h;                /** altitude */
-    float chi;              /** course angle */
+    // float h;                /** altitude */
+    float psi;              /** course angle */
   };
 
   struct output_s
   {
     bool  flag;             /** Inicates strait line or orbital path (true is line, false is orbit) */
     float Va_d;             /** Desired airspeed (m/s) */
-    float r[3];             /** Vector to origin of straight line path (m) */
-    float q[3];             /** Unit vector, desired direction of travel for line path */
-    float c[3];             /** Center of orbital path (m) */
+    float r[2];             /** Vector to origin of straight line path (m) */
+    float q[2];             /** Unit vector, desired direction of travel for line path */
+    float c[2];             /** Center of orbital path (m) */
     float rho;              /** Radius of orbital path (m) */
     int8_t lambda;          /** Direction of orbital path (cw is 1, ccw is -1) */
   };
@@ -79,14 +78,14 @@ private:
 
   struct params_s params_;
 
-  rosplane_msgs::State vehicle_state_;     /**< vehicle state */
+  kb_autopilot::State vehicle_state_;     /**< vehicle state */
 
   double update_rate_;
   ros::Timer update_timer_;
 
-  void vehicle_state_callback(const rosplane_msgs::StateConstPtr &msg);
+  void vehicle_state_callback(const kb_autopilot::StateConstPtr &msg);
   bool state_init_;
-  void new_waypoint_callback(const rosplane_msgs::Waypoint &msg);
+  void new_waypoint_callback(const kb_autopilot::Waypoint &msg);
   void current_path_publish(const ros::TimerEvent &);
 };
 } //end namespace
