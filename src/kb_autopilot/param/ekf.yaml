@@ -33,3 +33,11 @@ R_pose: [0.01,0,0,0 # north
          0.01,0,0,0 # east
          0.01] # heading
 R_v: 0.01 # velocity
+lambda: [1, # north
+         1, # east
+         1, # heading
+         1, # velocity
+         1, # velocity bias
+         1, # wheel separation
+         1, # steering signal scaling
+         1] # steering signal bias

@@ -44,6 +44,8 @@ private:
   Eigen::Matrix<double,3,8> H_pose_;
   Eigen::Matrix<double,3,3> R_pose_;
   double R_v_;
+  Eigen::Matrix<double,8,1> lambda_;
+  Eigen::Matrix<double,8,8> Lambda_;
 
   // additional variables
   double t_prev_;
