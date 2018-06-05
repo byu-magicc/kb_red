@@ -14,8 +14,9 @@ class Controller:
         # self.est_sub = rospy.Subscriber('odom', self.odometry_callback, queue_size = 1)
         self.est_sub = rospy.Subscriber('state', self.state_callback, queue_size = 1)
         self.command_pub = rospy.Publisher('command', Command, queue_size = 1)
+	self.enc_sub = rospy.Subscriber('encoder, self.encoder_callback, queue_size = 1)
 
-        self.thres = 0.5 #antiwind up threshold
+        self.thresh = 0.5 #antiwind up threshold
 
         #Variables for the linear velocity
         self.Kp_v = 2.0
@@ -100,3 +101,28 @@ class Controller:
         vel.throttle = self.v_command
 
         self.command_pub.publish(vel)
+
+    def encoder_callback(self, msg):
+	v = msg.data.v
+	now = rospy.Time.now()
+	dt = (now - self.prev_time)
+	self.prev_time = now
+
+	error = self.v_ref -v
+
+	if self.v_dot < self.thresh:
+	    self.integrator_v = self.integrator_v + dt / 2.0 * (error - self.prev_error_v)
+	self.v_dot = (2 * self.sigma - dt)/(2 * self.sigma + dt) * self.v_dot + 2.0/(2 * self.sigma + dt) * (v - self.prev_v)
+	self.prev_v = v
+
+	u_unsat = self.Kp_v * error - self.Kd_v * self.v_dot + self.Ki_v * self.integrator
+
+	self.v_command = u_unsat / self.Km_v
+
+	if self.v_command > 1.0 or self.v_command < -1.0:
+	    self.v_command = 1.0 * np.sign(self.v_command)
+
+	vel = Command()
+	vel.steer = 0.0
+	vel.throttle = self.v_command
+	self.command_pub.publish(vel)
