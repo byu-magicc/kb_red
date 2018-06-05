@@ -2,7 +2,7 @@
 #include "ros/ros.h"
 #include <cmath>
 
-namespace rosplane
+namespace kb_autopilot
 {
 
 path_manager_example::path_manager_example() : path_manager_base()
@@ -59,11 +59,11 @@ void path_manager_example::manage_line(const params_s &params, const input_s &in
   }
 
   Eigen::Vector3f w_im1;
-  w_im1 << waypoints_[idx_a_].w, 0;
+  w_im1 << waypoints_[idx_a_].w[0], waypoints_[idx_a_].w[1], 0;
   Eigen::Vector3f w_i;
-  w_i << waypoints_[idx_b].w, 0;
+  w_i << waypoints_[idx_b].w[0], waypoints_[idx_b].w[1], 0;
   Eigen::Vector3f w_ip1;
-  w_ip1 << waypoints_[idx_c].w, 0;
+  w_ip1 << waypoints_[idx_c].w[0], waypoints_[idx_c].w[1], 0;
 
   output.flag = true;
   output.Va_d = 1;
@@ -117,11 +117,11 @@ void path_manager_example::manage_fillet(const params_s &params, const input_s &
   }
 
   Eigen::Vector3f w_im1;
-  w_im1 << waypoints_[idx_a_].w, 0;
+  w_im1 << waypoints_[idx_a_].w[0], waypoints_[idx_a_].w[1], 0;
   Eigen::Vector3f w_i;
-  w_i << waypoints_[idx_b].w, 0;
+  w_i << waypoints_[idx_b].w[0], waypoints_[idx_b].w[1], 0;
   Eigen::Vector3f w_ip1;
-  w_ip1 << waypoints_[idx_c].w, 0;
+  w_ip1 << waypoints_[idx_c].w[0], waypoints_[idx_c].w[1], 0;
 
   float R_min = params.R_min;
 
