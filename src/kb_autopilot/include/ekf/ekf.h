@@ -5,7 +5,7 @@
 #include <eigen3/Eigen/Eigen>
 
 #include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Vector3Stamped.h>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
@@ -13,12 +13,13 @@
 
 #include "kb_utils/Encoder.h"
 #include "kb_utils/Servo_Command.h"
-
-typedef message_filters::sync_policies::ApproximateTime<kb_utils::Servo_Command, kb_utils::Encoder> MySyncPolicy;
+#include "kb_autopilot/State.h"
 
 
 namespace ekf
 {
+
+typedef message_filters::sync_policies::ApproximateTime<kb_utils::Servo_Command, kb_utils::Encoder> MySyncPolicy;
 
 class EKF
 {
@@ -31,20 +32,26 @@ private:
 
   // ROS
   ros::NodeHandle nh_, nh_private_;
+  ros::Subscriber pose_sub_;
   ros::Publisher state_pub_;
 
   // EKF arrays
-  Eigen::Matrix<double, 8, 1> x_;
-  Eigen::Matrix<double, 8, 8> P_, Qx_;
-  Eigen::Matrix<double, 8, 2> B_;
-  Eigen::Matrix<double, 2, 2> Qu_;
+  Eigen::Matrix<double,8,1> x_;
+  Eigen::Matrix<double,8,8> P_, Qx_;
+  Eigen::Matrix<double,8,2> B_;
+  Eigen::Matrix<double,2,2> Qu_;
+  Eigen::Matrix<double,1,8> H_v_;
+  Eigen::Matrix<double,3,8> H_pose_;
+  Eigen::Matrix<double,3,3> R_pose_;
+  double R_v_;
 
   // additional variables
+  Eigen::Matrix<double,8,8> I8_;
   double t_prev_;
 
   // functions
   void propCallback(const kb_utils::Servo_CommandConstPtr& servo_msg, const kb_utils::EncoderConstPtr& encoder_msg);
-  void update();
+  void update(const geometry_msgs::Vector3StampedConstPtr& msg);
 
 };
 
