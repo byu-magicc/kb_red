@@ -12,12 +12,22 @@ EKF::EKF() :
   rosImportScalar<int>(nh_, "car_length", car_length, 0.179);
   rosImportScalar<int>(nh_, "rmin_left", rmin_left, 0.7);
   rosImportScalar<int>(nh_, "rmin_right", rmin_right, 0.7);
+  rosImportMatrix<double>(nh_, "x0", x_);
+  rosImportMatrix<double>(nh_, "P0", P_);
+  rosImportMatrix<double>(nh_, "Qx", Qx_);
+  rosImportMatrix<double>(nh_, "Qu", Qu_);
   rosImportMatrix<double>(nh_, "R_pose", R_pose_);
   rosImportScalar<double>(nh_, "R_v", R_v_, 1);
 
   // other parameters and constants
-  I8_.setIdentity();
   t_prev_ = 0;
+  B_.setZero();
+  B_(7,0) = 1;
+  B_(3,1) = 1;
+  H_v_.setZero();
+  H_v_(3) = 1;
+  H_pose_.setZero();
+  H_pose_.block<3,3>(0,0) = Eigen::MatrixXd::Identity(3,3);
 
   // set up ROS subscribers
   message_filters::Subscriber<kb_utils::Servo_Command> cmd_sub(nh_, "/safety_pilot", 1);
@@ -28,19 +38,6 @@ EKF::EKF() :
 
   // set up ROS publishers
   state_pub_ = nh_.advertise<kb_autopilot::State>("state", 1);
-
-  // state, covariance, process/input noise covariance, measurement covariance
-  x_.setZero();
-  P_ = 1e-3*I8_;
-  Qu_ = 1e-3*Eigen::MatrixXd::Identity(2,2);
-  Qx_ = 1e-3*I8_;
-  B_.setZero();
-  B_(7,0) = 1;
-  B_(3,1) = 1;
-  H_v_.setZero();
-  H_v_(3) = 1;
-  H_pose_.setZero();
-  H_pose_.block<3,3>(0,0) = Eigen::MatrixXd::Identity(3,3);
 }
 
 
@@ -68,7 +65,7 @@ void EKF::propCallback(const kb_utils::Servo_CommandConstPtr& servo_msg, const k
   // first update the velocity estimate with its measurement
   Eigen::Matrix<double,8,1> K = P_*H_v_.transpose()/(H_v_*P_*H_v_.transpose()+R_v_);
   x_ += K*(v_meas - v);
-  P_ = (I8_-K*H_v_)*P_;
+  P_ = (Eigen::MatrixXd::Identity(8,8)-K*H_v_)*P_;
 
   // state kinematics
   Eigen::Matrix<double, 8, 1> f;
@@ -107,7 +104,7 @@ void EKF::update(const geometry_msgs::Vector3StampedConstPtr& msg)
   // apply update
   Eigen::Matrix<double,8,3> K = P_*H_pose_.transpose()*(H_pose_*P_*H_pose_.transpose()+R_pose_).inverse();
   x_ += K*(z-hx);
-  P_ = (I8_-K*H_pose_)*P_;
+  P_ = (Eigen::MatrixXd::Identity(8,8)-K*H_pose_)*P_;
 }
 
 

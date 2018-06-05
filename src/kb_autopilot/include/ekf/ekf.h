@@ -46,7 +46,6 @@ private:
   double R_v_;
 
   // additional variables
-  Eigen::Matrix<double,8,8> I8_;
   double t_prev_;
 
   // functions
