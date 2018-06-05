@@ -59,8 +59,8 @@ class Controller:
 
     def state_callback(self, msg):
 
-        psi = msg.psi #Heading angle
-        v = msg.u   #Body velocity
+        psi = msg.data.psi #Heading angle
+        v = msg.data.u   #Body velocity
         now = rospy.Time.now()
         dt = (now - self.prev_time).to_sec()
         self.prev_time = now
