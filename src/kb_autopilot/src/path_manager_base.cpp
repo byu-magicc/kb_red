@@ -43,11 +43,6 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::Waypoint &msg
     waypoint_s currentwp;
     currentwp.w[0] = vehicle_state_.position[0];
     currentwp.w[1] = vehicle_state_.position[1];
-    currentwp.w[2] = (vehicle_state_.position[2] > -25 ? msg.w[2] : vehicle_state_.position[2]);
-    currentwp.chi_d = vehicle_state_.chi;
-    currentwp.chi_valid = msg.chi_valid;
-    currentwp.Va_d = msg.Va_d;
-
     waypoints_.clear();
     waypoints_.push_back(currentwp);
     num_waypoints_ = 1;
@@ -56,10 +51,6 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::Waypoint &msg
   waypoint_s nextwp;
   nextwp.w[0]         = msg.w[0];
   nextwp.w[1]         = msg.w[1];
-  nextwp.w[2]         = msg.w[2];
-  nextwp.chi_d        = msg.chi_d;
-  nextwp.chi_valid    = msg.chi_valid;
-  nextwp.Va_d         = msg.Va_d;
   waypoints_.push_back(nextwp);
   num_waypoints_++;
 }
@@ -70,7 +61,6 @@ void path_manager_base::current_path_publish(const ros::TimerEvent &)
   struct input_s input;
   input.pn = vehicle_state_.position[0];               /** position north */
   input.pe = vehicle_state_.position[1];               /** position east */
-  input.h =  -vehicle_state_.position[2];                /** altitude */
   input.chi = vehicle_state_.chi;
 
   struct output_s output;
@@ -87,7 +77,7 @@ void path_manager_base::current_path_publish(const ros::TimerEvent &)
   else
     current_path.path_type = current_path.ORBIT_PATH;
   current_path.Va_d = output.Va_d;
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < 2; i++)
   {
     current_path.r[i] = output.r[i];
     current_path.q[i] = output.q[i];
