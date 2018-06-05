@@ -12,9 +12,9 @@ class Controller:
     def __init__(self):
         self.path_sub = rospy.Subscriber('controller_cmd', self.reference_callback, queue_size = 1)
         # self.est_sub = rospy.Subscriber('odom', self.odometry_callback, queue_size = 1)
-        self.est_sub = rospy.Subscriber('state', self.state_callback, queue_size = 1)
+        self.est_sub = rospy.Subscriber('state', self.state_callback, queue_size = 1)   #will we be using the state message or odom from estimator?
         self.command_pub = rospy.Publisher('command', Command, queue_size = 1)
-	self.enc_sub = rospy.Subscriber('encoder, self.encoder_callback, queue_size = 1)
+	    self.enc_sub = rospy.Subscriber('encoder, self.encoder_callback, queue_size = 1)
 
         self.thresh = 0.5 #antiwind up threshold
 
@@ -31,7 +31,6 @@ class Controller:
         self.v_dot = 0.0
         self.v_command = 0.0
         self.v_sat = 1.0
-        #I think I will need a scale factor
 
         #Variables for the angular velocity
         self.Kp_psi = 0.7
@@ -103,26 +102,27 @@ class Controller:
         self.command_pub.publish(vel)
 
     def encoder_callback(self, msg):
-	v = msg.data.v
-	now = rospy.Time.now()
-	dt = (now - self.prev_time)
-	self.prev_time = now
+    	v = msg.data.vel
+        print 'Velocity', v
+    	now = rospy.Time.now()
+    	dt = (now - self.prev_time).to_sec()
+    	self.prev_time = now
 
-	error = self.v_ref -v
+    	error = self.v_ref - v
 
-	if self.v_dot < self.thresh:
-	    self.integrator_v = self.integrator_v + dt / 2.0 * (error - self.prev_error_v)
-	self.v_dot = (2 * self.sigma - dt)/(2 * self.sigma + dt) * self.v_dot + 2.0/(2 * self.sigma + dt) * (v - self.prev_v)
-	self.prev_v = v
+    	if self.v_dot < self.thresh:
+    	    self.integrator_v = self.integrator_v + dt / 2.0 * (error - self.prev_error_v)
+    	self.v_dot = (2 * self.sigma - dt)/(2 * self.sigma + dt) * self.v_dot + 2.0 / (2 * self.sigma + dt) * (v - self.prev_v)
+    	self.prev_v = v
 
-	u_unsat = self.Kp_v * error - self.Kd_v * self.v_dot + self.Ki_v * self.integrator
+    	u_unsat = self.Kp_v * error - self.Kd_v * self.v_dot + self.Ki_v * self.integrator_v
 
-	self.v_command = u_unsat / self.Km_v
+    	self.v_command = u_unsat / self.Km_v
 
-	if self.v_command > 1.0 or self.v_command < -1.0:
-	    self.v_command = 1.0 * np.sign(self.v_command)
+    	if self.v_command > 1.0 or self.v_command < -1.0:
+    	    self.v_command = 1.0 * np.sign(self.v_command)
 
-	vel = Command()
-	vel.steer = 0.0
-	vel.throttle = self.v_command
-	self.command_pub.publish(vel)
+    	vel = Command()
+    	vel.steer = 0.0
+    	vel.throttle = self.v_command
+    	self.command_pub.publish(vel)
