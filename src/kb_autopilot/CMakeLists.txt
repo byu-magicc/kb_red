@@ -158,13 +158,13 @@ include_directories(
 add_executable(path_follower
             src/path_follower_example.cpp
             src/path_follower_base.cpp)
-add_dependencies(path_follower ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
+add_dependencies(path_follower ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 target_link_libraries(path_follower ${catkin_LIBRARIES})
 
 add_executable(path_manager
             src/path_manager_base.cpp
             src/path_manager_example.cpp)
-add_dependencies(path_manager ${catkin_EXPORTED_TARGETS})
+add_dependencies(path_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(path_manager ${catkin_LIBRARIES})
 
 #############
