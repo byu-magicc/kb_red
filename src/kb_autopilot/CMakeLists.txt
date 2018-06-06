@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(kb_autopilot)
 
-set(CMAKE_CXX_STANDARD 11)
+## Compile as C++11, supported in ROS Kinetic and newer
+set(CMAKE_CXX_FLAGS "-std=c++11 -fopenmp")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -12,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  message_filters
+  common_ros
 )
 find_package(Eigen3 REQUIRED)
 
@@ -107,9 +110,9 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES kb_autopilot
-  CATKIN_DEPENDS geometry_msgs message_generation roscpp rospy std_msgs
+#  INCLUDE_DIRS include
+  LIBRARIES common_cpp
+  CATKIN_DEPENDS common_ros geometry_msgs message_generation roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -120,7 +123,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
- include
+  include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
@@ -138,7 +141,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/kb_autopilot_node.cpp)
+add_executable(ekf_node src/ekf_node.cpp src/ekf.cpp)
+target_link_libraries(ekf_node common_cpp ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
