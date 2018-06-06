@@ -58,6 +58,8 @@ add_message_files(
   Controller_Commands.msg
   Current_Path.msg
   Waypoint.msg
+  Vo.msg
+  Encoder.msg
 )
 
 ## Generate services in the 'srv' folder
