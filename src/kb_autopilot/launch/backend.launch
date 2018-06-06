@@ -24,7 +24,7 @@
 
 
   <!-- KF Factory -->
-  <node name="kf_factory" pkg="openfabmap" type="keyframe_factory_node" output="screen" args="_image_transport:=compressed">
+  <node name="kf_factory" pkg="openfabmap" type="keyframe_factory_node" output="screen">
   	<remap from="state" to="ekf_state"/>
   	<remap from="pose" to="bleh"/>
   </node>
