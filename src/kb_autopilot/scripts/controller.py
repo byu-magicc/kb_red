@@ -39,16 +39,19 @@ class Controller:
         self.v_sat = 1.0
 
         #Variables for the angular velocity
-        self.Kp_psi = 0.7
-        self.Kd_psi = 0.3
-        self.Ki_psi = 0.03
-        self.Km_psi = .758 #Scale factor
+        self.Kp_psi = 0.5
+        self.Kd_psi = 0.03
+        self.Ki_psi = 0.0
+        self.Km_psi = 1.0 #Scale factor
         self.prev_error_psi = 0.0
         self.integrator_psi = 0.0
         self.prev_psi = 0.0
         self.psi_dot = 0.0
         self.psi_command = 0.0
         self.psi_sat = 1.0
+        self.sigma_psi = 1.0
+        self.e_sat_psi = .1
+        self.u_sat_psi = .1
 
         #Variables for storing values from messages
         self.v_ref = 0.0
@@ -78,18 +81,29 @@ class Controller:
 
         #Angle controller
         error = self.psi_ref - heading
+        if error > self.e_sat_psi:
+            error = self.e_sat_psi
+        elif error < - self.e_sat_psi:
+            error = - self.e_sat_psi
 
-        if self.psi_dot < self.thresh: #Anti wind up. Integrator will only be used if the derivative is small
-            self.integrator_psi = self.integrator_psi + dt / 2.0 * (error - self.prev_error_psi)
-        self.psi_dot = (2 * self.sigma - dt)/(2 * self.sigma + dt) * self.psi_dot + 2.0 / (2 * self.sigma + dt) * (psi- self.prev_psi)
+        #Do I need to reset the integrator???
+
+        self.integrator_psi = self.integrator_psi + dt / 2.0 * (error - self.prev_error_psi)
+        self.psi_dot = (2 * self.sigma_psi - dt)/(2 * self.sigma_psi + dt) * self.psi_dot + 2.0 / (2 * self.sigma_psi + dt) * (psi- self.prev_psi)
         self.prev_psi = w
 
-        u_unsat = self.Kp_psi * error - self.Kd_psi * self.psi_dot + self.Ki_psi * self.integrator_psi
+        u_psi_unsat = self.Kp_psi * error - self.Kd_psi * self.psi_dot + self.Ki_psi * self.integrator_psi
 
-        self.psi_command = u_unsat / self.Km_psi
+        u_psi = u_psi_unsat / self.Km_psi
 
-        if self.psi_command > 1.0 or self.psi_command < -1.0:
-            self.psi_command = 1.0 * np.sign(self.psi_command)
+        if u_psi > self.u_sat_psi or u_psi < -self.u_sat_psi:
+            self.psi_command = self.u_sat_psi * np.sign(u_psi)
+        else:
+            self.psi_command = u_psi
+
+        #Anti wind up
+        if self.Ki_psi !=0.0:
+            self.integrator_psi = self.integrator_psi + dt/self.Ki_psi * (self.psi_command - u_psi)
 
         #Throttle Controller
         error = self.v_ref - v
