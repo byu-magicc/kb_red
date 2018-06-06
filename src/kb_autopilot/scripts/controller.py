@@ -85,6 +85,7 @@ class Controller:
         #Do I need to reset the integrator???
 
         self.integrator_psi = self.integrator_psi + dt / 2.0 * (error - self.prev_error_psi)
+        self.prev_error_psi = error
         self.psi_dot = (2 * self.sigma_psi - dt)/(2 * self.sigma_psi + dt) * self.psi_dot + 2.0 / (2 * self.sigma_psi + dt) * (psi- self.prev_psi)
         self.prev_psi = w
 
@@ -113,6 +114,7 @@ class Controller:
 
         self.integrator_v = self.integrator_v + dt / 2.0 * (error - self.prev_error_v)
 	    #print self.integrator_v
+        self.prev_error_v = error
     	self.v_dot = (2 * self.sigma_v - dt)/(2 * self.sigma_v + dt) * self.v_dot + 2.0 / (2 * self.sigma_v + dt) * (v - self.prev_v)
     	self.prev_v = v
 
@@ -152,6 +154,7 @@ class Controller:
     	    self.integrator_v = 0
 
         self.integrator_v = self.integrator_v + dt / 2.0 * (error - self.prev_error_v)
+        self.prev_error_v = error
 	    #print self.integrator_v
     	self.v_dot = (2 * self.sigma_v - dt)/(2 * self.sigma_v + dt) * self.v_dot + 2.0 / (2 * self.sigma_v + dt) * (v - self.prev_v)
     	self.prev_v = v
