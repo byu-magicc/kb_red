@@ -5,7 +5,9 @@
 #include <eigen3/Eigen/Eigen>
 
 #include <ros/ros.h>
-#include <geometry_msgs/Vector3Stamped.h>
+#include <tf/tf.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
@@ -35,7 +37,7 @@ private:
   message_filters::Subscriber<kb_utils::Servo_Command> cmd_sub_;
   message_filters::Subscriber<kb_utils::Encoder> enc_sub_;
   message_filters::Synchronizer<MySyncPolicy> sync_;
-  ros::Subscriber pose_sub_;
+  ros::Subscriber pose_sub_, odom_sub_;
   ros::Publisher state_pub_;
 
   // EKF arrays
@@ -55,11 +57,14 @@ private:
 
   // functions
   void propCallback(const kb_utils::Servo_CommandConstPtr& servo_msg, const kb_utils::EncoderConstPtr& encoder_msg);
-  void update(const geometry_msgs::Vector3StampedConstPtr& msg);
+  void odomUpdate(const nav_msgs::OdometryConstPtr& msg);
+  void poseUpdate(const geometry_msgs::PoseStampedConstPtr& msg);
   void publishState();
 
 };
 
+
+double wrapAngle(double x);
 
 
 /*======== functions for importing from ROS parameter server ========*/

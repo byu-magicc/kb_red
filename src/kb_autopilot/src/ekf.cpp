@@ -33,7 +33,8 @@ EKF::EKF() :
 
   // set up ROS subscribers
   sync_.registerCallback(std::bind(&EKF::propCallback, this, std::placeholders::_1, std::placeholders::_2));
-  pose_sub_ = nh_.subscribe("/pose", 1, &EKF::update, this);
+  pose_sub_ = nh_.subscribe("/pose", 1, &EKF::poseUpdate, this);
+  odom_sub_ = nh_.subscribe("/ins", 1, &EKF::odomUpdate, this);
 
   // set up ROS publishers
   state_pub_ = nh_.advertise<kb_autopilot::State>("/ekf_state", 1);
@@ -48,7 +49,7 @@ void EKF::propCallback(const kb_utils::Servo_CommandConstPtr& servo_msg, const k
   t_prev_ = t_now;
 
   // collect steering signal and measure velocity
-  double s = servo_msg->steer; // actually comes in as an integer
+  double s = servo_msg->steer;
   double v_meas = encoder_msg->vel;
 
   // unpack state
@@ -97,15 +98,50 @@ void EKF::propCallback(const kb_utils::Servo_CommandConstPtr& servo_msg, const k
 }
 
 
-void EKF::update(const geometry_msgs::Vector3StampedConstPtr& msg)
+void EKF::odomUpdate(const nav_msgs::OdometryConstPtr& msg)
 {
-  // unpack measurement and estimated measurement
-  Eigen::Vector3d z(msg->vector.x,msg->vector.y,msg->vector.z);
+  // extract heading from quaternion
+  tf::Pose pose;
+  tf::poseMsgToTF(msg->pose.pose, pose);
+  double psi_meas = tf::getYaw(pose.getRotation());
+
+  // unpack estimated measurement
+  Eigen::Vector3d z(msg->pose.pose.position.x,msg->pose.pose.position.y,psi_meas);
   Eigen::Vector3d hx = x_.segment<3>(0);
+
+  // residual error
+  Eigen::Vector3d r = z-hx;
+
+  // make sure to use shortest angle in heading update
+  r(2) = wrapAngle(r(2));
 
   // apply update
   Eigen::Matrix<double,8,3> K = P_*H_pose_.transpose()*(H_pose_*P_*H_pose_.transpose()+R_pose_).inverse();
-  x_ += lambda_.cwiseProduct(K*(z-hx));
+  x_ += lambda_.cwiseProduct(K*r);
+  P_ -= Lambda_.cwiseProduct(K*H_pose_*P_);
+}
+
+
+void EKF::poseUpdate(const geometry_msgs::PoseStampedConstPtr& msg)
+{
+  // extract heading from quaternion
+  tf::Pose pose;
+  tf::poseMsgToTF(msg->pose, pose);
+  double psi_meas = tf::getYaw(pose.getRotation());
+
+  // unpack estimated measurement
+  Eigen::Vector3d z(msg->pose.position.x,msg->pose.position.y,psi_meas);
+  Eigen::Vector3d hx = x_.segment<3>(0);
+
+  // residual error
+  Eigen::Vector3d r = z-hx;
+
+  // make sure to use shortest angle in heading update
+  r(2) = wrapAngle(r(2));
+
+  // apply update
+  Eigen::Matrix<double,8,3> K = P_*H_pose_.transpose()*(H_pose_*P_*H_pose_.transpose()+R_pose_).inverse();
+  x_ += lambda_.cwiseProduct(K*r);
   P_ -= Lambda_.cwiseProduct(K*H_pose_*P_);
 }
 
@@ -123,6 +159,15 @@ void EKF::publishState()
   msg.b_s =     x_(7); // servo steering angle bias
   msg.psi_deg = x_(2)*180/M_PI; // unwrapped yaw angle (deg)
   state_pub_.publish(msg);
+}
+
+
+double wrapAngle(double x)
+{
+    x = fmod(x + M_PI,2*M_PI);
+    if (x < 0)
+        x += 2*M_PI;
+    return x - M_PI;
 }
 
 

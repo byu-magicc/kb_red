@@ -1,0 +1,11 @@
+<launch>
+
+  <!-- <node name="bagplay" pkg="rosbag" type="play" output="screen" args="/home/jerel/collect7.bag -s 23"/> -->
+  <node name="bagplay" pkg="rosbag" type="play" output="screen" args="/home/jerel/mocap_bags/mocap_forward_easy.bag -s 0"/>
+
+  <!-- <node name="imageview" pkg="rqt_image_view" type="rqt_image_view" output="screen"/> -->
+
+  <rosparam command="load" file="$(find kb_autopilot)/param/ekf.yaml"/>
+  <node name="ekf_node" pkg="kb_autopilot" type="ekf_node" output="screen"/>
+
+</launch>
