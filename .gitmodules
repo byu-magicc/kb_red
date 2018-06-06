@@ -7,6 +7,3 @@
 [submodule "src/timed_roslaunch"]
 	path = src/timed_roslaunch
 	url = https://github.com/MoriKen254/timed_roslaunch.git
-[submodule "src/common_ros"]
-	path = src/common_ros
-	url = https://magiccvs.byu.edu/gitlab/Jerel/common_ros.git 
