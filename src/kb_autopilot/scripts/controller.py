@@ -13,7 +13,7 @@ import time
 class Controller:
 
     def __init__(self):
-        self.path_sub = rospy.Subscriber('controller_cmd', Controller_Commands, self.reference_callback, queue_size = 1)
+        self.path_sub = rospy.Subscriber('controller_commands', Controller_Commands, self.reference_callback, queue_size = 1)
         # self.est_sub = rospy.Subscriber('odom', self.odometry_callback, queue_size = 1)
         self.est_sub = rospy.Subscriber('state', State, self.state_callback, queue_size = 1)   #will we be using the state message or odom from estimator?
         self.command_pub = rospy.Publisher('command', Command, queue_size = 1)
