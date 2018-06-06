@@ -19,8 +19,6 @@ class Controller:
         self.command_pub = rospy.Publisher('command', Command, queue_size = 1)
 	    self.enc_sub = rospy.Subscriber('encoder', Encoder,self.encoder_callback, queue_size = 1)
 
-        self.thresh = 0.5 #antiwind up threshold
-
         #Variables for the linear velocity
         self.Kp_v = 0.5
         self.Kd_v = 0.03
@@ -56,8 +54,6 @@ class Controller:
         #Variables for storing values from messages
         self.v_ref = 0.0
         self.psi_ref = 0.0
-        self.v = 0.0
-        self.psi = 0.0
         self.command_v = 0.0
         self.command_psi = 0.0
 
