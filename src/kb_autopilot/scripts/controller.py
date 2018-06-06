@@ -17,7 +17,7 @@ class Controller:
         # self.est_sub = rospy.Subscriber('odom', self.odometry_callback, queue_size = 1)
         self.est_sub = rospy.Subscriber('state', State, self.state_callback, queue_size = 1)   #will we be using the state message or odom from estimator?
         self.command_pub = rospy.Publisher('command', Command, queue_size = 1)
-	    self.enc_sub = rospy.Subscriber('encoder', Encoder,self.encoder_callback, queue_size = 1)
+	#self.enc_sub = rospy.Subscriber('encoder', Encoder,self.encoder_callback, queue_size = 1)
 
         #Variables for the linear velocity
         self.Kp_v = 0.5
@@ -28,8 +28,8 @@ class Controller:
         self.integrator_v = 0.0
         self.sigma_v = 2.5
         self.prev_v = 0.0
-	    self.e_sat_v = 0.3
-	    self.u_sat_v = 0.3
+	self.e_sat_v = 0.3
+	self.u_sat_v = 0.3
 
         self.prev_time = rospy.Time.now()
         self.v_dot = 0.0
@@ -37,8 +37,8 @@ class Controller:
         self.v_sat = 1.0
 
         #Variables for the angular velocity
-        self.Kp_psi = 0.5
-        self.Kd_psi = 0.03
+        self.Kp_psi = 2.0
+        self.Kd_psi = 0.0
         self.Ki_psi = 0.0
         self.Km_psi = 1.0 #Scale factor
         self.prev_error_psi = 0.0
@@ -48,8 +48,8 @@ class Controller:
         self.psi_command = 0.0
         self.psi_sat = 1.0
         self.sigma_psi = 1.0
-        self.e_sat_psi = .1
-        self.u_sat_psi = .1
+        self.e_sat_psi = .6
+        self.u_sat_psi = 1.0
 
         #Variables for storing values from messages
         self.v_ref = 0.0
@@ -76,7 +76,13 @@ class Controller:
         self.prev_time = now
 
         #Angle controller
-        error = self.psi_ref - heading
+        error = self.psi_ref - psi
+        while error > np.pi:
+            error = error - 2 * np.pi
+
+        while error < - np.pi:
+            error = error + 2 * np.pi
+
         if error > self.e_sat_psi:
             error = self.e_sat_psi
         elif error < - self.e_sat_psi:
@@ -87,7 +93,7 @@ class Controller:
         self.integrator_psi = self.integrator_psi + dt / 2.0 * (error - self.prev_error_psi)
         self.prev_error_psi = error
         self.psi_dot = (2 * self.sigma_psi - dt)/(2 * self.sigma_psi + dt) * self.psi_dot + 2.0 / (2 * self.sigma_psi + dt) * (psi- self.prev_psi)
-        self.prev_psi = w
+        self.prev_psi = psi
 
         u_psi_unsat = self.Kp_psi * error - self.Kd_psi * self.psi_dot + self.Ki_psi * self.integrator_psi
 
@@ -121,6 +127,7 @@ class Controller:
     	u_unsat = self.Kp_v * error - self.Kd_v * self.v_dot + self.Ki_v * self.integrator_v
 
     	u = u_unsat / self.Km_v
+        print(u)
 
     	if u > self.u_sat_v or u < -self.u_sat_v:
     	    self.v_command = self.u_sat_v * np.sign(u)
