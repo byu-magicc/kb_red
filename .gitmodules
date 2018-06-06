@@ -9,4 +9,4 @@
 	url = https://github.com/MoriKen254/timed_roslaunch.git
 [submodule "src/common_ros"]
 	path = src/common_ros
-	url = git@magiccvs.byu.edu:Jerel/common_ros.git
+	url = https://magiccvs.byu.edu/gitlab/Jerel/common_ros.git 
