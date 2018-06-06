@@ -8,106 +8,150 @@ EKF::EKF() :
   nh_private_("~")
 {
   // retrieve parameters from ROS parameter server
-  double car_length, rmin_left, rmin_right;
-  rosImportScalar<int>(nh_, "car_length", car_length, 0.179);
-  rosImportScalar<int>(nh_, "rmin_left", rmin_left, 0.7);
-  rosImportScalar<int>(nh_, "rmin_right", rmin_right, 0.7);
-  rosImportMatrix<double>(nh_, "R_pose", R_pose_);
-  rosImportScalar<double>(nh_, "R_v", R_v_, 1);
+  common::rosImportMatrix<double>(nh_, "x0", x_);
+  common::rosImportMatrix<double>(nh_, "P0", P_);
+  common::rosImportMatrix<double>(nh_, "Qx", Qx_);
+  common::rosImportMatrix<double>(nh_, "Qu", Qu_);
+  common::rosImportMatrix<double>(nh_, "R_pose", R_pose_);
+  common::rosImportMatrix<double>(nh_, "lambda", lambda_);
+  Eigen::Matrix<double,5,1> onevec; onevec.setOnes();
+  Lambda_ = onevec*lambda_.transpose()+lambda_*onevec.transpose()-lambda_*lambda_.transpose();
 
   // other parameters and constants
-  I8_.setIdentity();
   t_prev_ = 0;
-
-  // set up ROS subscribers
-  message_filters::Subscriber<kb_utils::Servo_Command> cmd_sub(nh_, "/safety_pilot", 1);
-  message_filters::Subscriber<kb_utils::Encoder> enc_sub(nh_, "/encoder", 1);
-  message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), cmd_sub, enc_sub);
-  sync.registerCallback(std::bind(&EKF::propCallback, this, std::placeholders::_1, std::placeholders::_2));
-  pose_sub_ = nh_.subscribe("/pose", 1, &EKF::update, this);
-
-  // set up ROS publishers
-  state_pub_ = nh_.advertise<kb_autopilot::State>("state", 1);
-
-  // state, covariance, process/input noise covariance, measurement covariance
-  x_.setZero();
-  P_ = 1e-3*I8_;
-  Qu_ = 1e-3*Eigen::MatrixXd::Identity(2,2);
-  Qx_ = 1e-3*I8_;
+  omega_v1_z_ = 0;
   B_.setZero();
-  B_(7,0) = 1;
-  B_(3,1) = 1;
-  H_v_.setZero();
-  H_v_(3) = 1;
+  B_(3,0) = 1;
+  B_(4,1) = 1;
   H_pose_.setZero();
   H_pose_.block<3,3>(0,0) = Eigen::MatrixXd::Identity(3,3);
+
+  // set up ROS subscribers
+  enc_sub_ = nh_.subscribe("/encoder", 1, &EKF::encoderCallback, this);
+  ins_sub_ = nh_.subscribe("/ins", 1, &EKF::insCallback, this);
+  pose_sub_ = nh_.subscribe("/pose", 1, &EKF::poseUpdate, this);
+
+  // set up ROS publishers
+  state_pub_ = nh_.advertise<kb_autopilot::State>("/ekf_state", 1);
 }
 
 
-void EKF::propCallback(const kb_utils::Servo_CommandConstPtr& servo_msg, const kb_utils::EncoderConstPtr& encoder_msg)
+void EKF::encoderCallback(const kb_utils::EncoderConstPtr& msg)
 {
   // get time step
-  double t_now = servo_msg->header.stamp.toSec();
+  double t_now = msg->header.stamp.toSec();
   double dt = t_now - t_prev_;
   t_prev_ = t_now;
 
-  // collect steering signal and measure velocity
-  double s = servo_msg->steer; // actually comes in as an integer
-  double v_meas = encoder_msg->vel;
+  // collect measured velocity
+  double v_meas = msg->vel;
 
   // unpack state
   double pn  = x_(0);
   double pe  = x_(1);
   double psi = x_(2);
-  double v   = x_(3);
+  double br  = x_(3);
   double bv  = x_(4);
-  double L   = x_(5);
-  double a   = x_(6);
-  double bs  = x_(7);
-
-  // first update the velocity estimate with its measurement
-  Eigen::Matrix<double,8,1> K = P_*H_v_.transpose()/(H_v_*P_*H_v_.transpose()+R_v_);
-  x_ += K*(v_meas - v);
-  P_ = (I8_-K*H_v_)*P_;
 
   // state kinematics
-  Eigen::Matrix<double, 8, 1> f;
+  Eigen::Matrix<double, 5, 1> f;
   f.setZero();
-  f(0) = (v+bv)*cos(psi);
-  f(1) = (v+bv)*sin(psi);
-  f(2) = (v+bv)/L*tan(a*s+bs);
+  f(0) = (v_meas+bv)*cos(psi);
+  f(1) = (v_meas+bv)*sin(psi);
+  f(2) = omega_v1_z_;
 
   // covariance kinematics
-  Eigen::Matrix<double, 8, 8> A;
+  Eigen::Matrix<double, 5, 5> A;
   A.setZero();
-  A(0,2) = -(v+bv)*sin(psi);
-  A(0,3) = cos(psi);
+  A(0,2) = -(v_meas+bv)*sin(psi);
   A(0,4) = cos(psi);
-  A(1,2) = (v+bv)*cos(psi);
-  A(1,3) = sin(psi);
+  A(1,2) = (v_meas+bv)*cos(psi);
   A(1,4) = sin(psi);
-  A(2,3) = tan(a*s+bs)/L;
-  A(2,4) = tan(a*s+bs)/L;
-  A(2,5) = -(v+bv)/L/L*tan(a*s+bs);
-  A(2,6) = s*(v+bv)/L/cos(a*s+bs)/cos(a*s+bs);
-  A(2,7) = (v+bv)/L/cos(a*s+bs)/cos(a*s+bs);
+  A(2,3) = 1;
 
   // propagate the state
   x_ += f*dt;
   P_ = (A*P_+P_*A.transpose()+B_*Qu_*B_.transpose()+Qx_)*dt;
+
+  // publish the current state
+  publishState();
 }
 
 
-void EKF::update(const geometry_msgs::Vector3StampedConstPtr& msg)
+void EKF::insCallback(const nav_msgs::OdometryConstPtr& msg)
 {
-  // unpack measurement and estimated measurement
-  Eigen::Vector3d z(msg->vector.x,msg->vector.y,msg->vector.z);
+  // extract rotation rate about vertical axis for propagation
+  common::Quaternion q_i2b(msg->pose.pose.orientation.w,
+                           msg->pose.pose.orientation.x,
+                           msg->pose.pose.orientation.y,
+                           msg->pose.pose.orientation.z);
+  Eigen::Matrix3d R_v1_to_b = common::R_v2_to_b(q_i2b.roll())*common::R_v1_to_v2(q_i2b.pitch());
+  Eigen::Vector3d omega_b(msg->twist.twist.angular.x,
+                          msg->twist.twist.angular.y,
+                          msg->twist.twist.angular.z);
+  Eigen::Vector3d omega_v1 = R_v1_to_b.transpose()*omega_b;
+  omega_v1_z_ = omega_v1(2);
+
+  // unpack estimated measurement of position and heading
+  Eigen::Vector3d z(msg->pose.pose.position.x,msg->pose.pose.position.y,q_i2b.yaw());
   Eigen::Vector3d hx = x_.segment<3>(0);
 
+  // residual error
+  Eigen::Vector3d r = z-hx;
+
+  // make sure to use shortest angle in heading update
+  r(2) = wrapAngle(r(2));
+
   // apply update
-  Eigen::Matrix<double,8,3> K = P_*H_pose_.transpose()*(H_pose_*P_*H_pose_.transpose()+R_pose_).inverse();
-  x_ += K*(z-hx);
-  P_ = (I8_-K*H_pose_)*P_;
+  Eigen::Matrix<double,5,3> K = P_*H_pose_.transpose()*(H_pose_*P_*H_pose_.transpose()+R_pose_).inverse();
+  x_ += lambda_.cwiseProduct(K*r);
+  P_ -= Lambda_.cwiseProduct(K*H_pose_*P_);
+}
+
+
+void EKF::poseUpdate(const geometry_msgs::PoseStampedConstPtr& msg)
+{
+  // extract heading from quaternion
+  tf::Pose pose;
+  tf::poseMsgToTF(msg->pose, pose);
+  double psi_meas = tf::getYaw(pose.getRotation());
+
+  // unpack estimated measurement
+  Eigen::Vector3d z(msg->pose.position.x,msg->pose.position.y,psi_meas);
+  Eigen::Vector3d hx = x_.segment<3>(0);
+
+  // residual error
+  Eigen::Vector3d r = z-hx;
+
+  // make sure to use shortest angle in heading update
+  r(2) = wrapAngle(r(2));
+
+  // apply update
+  Eigen::Matrix<double,5,3> K = P_*H_pose_.transpose()*(H_pose_*P_*H_pose_.transpose()+R_pose_).inverse();
+  x_ += lambda_.cwiseProduct(K*r);
+  P_ -= Lambda_.cwiseProduct(K*H_pose_*P_);
+}
+
+
+void EKF::publishState()
+{
+  kb_autopilot::State msg;
+  msg.p_north = x_(0); // north position (m)
+  msg.p_east =  x_(1); // east position (m)
+  msg.psi =     x_(2); // unwrapped yaw angle (rad)
+  msg.u =       x_(3); // body fixed forward velocity (m/s)
+  msg.b_u =     x_(4); // velocity bias
+  msg.psi_deg = x_(2)*180/M_PI; // unwrapped yaw angle (deg)
+  state_pub_.publish(msg);
+}
+
+
+double wrapAngle(double x)
+{
+    x = fmod(x + M_PI,2*M_PI);
+    if (x < 0)
+        x += 2*M_PI;
+    return x - M_PI;
 }
 
 

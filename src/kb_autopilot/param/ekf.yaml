@@ -1,5 +1,27 @@
 ### ekf parameters ###
 
-car_length: 0.179 # meters
-rmin_left: 0.713 # meters
-rmin_right: 0.770 # meters
+x0: [-5, # north
+     -9, # east
+     1.6, # heading
+     0, # gyro bias
+     0] # velocity bias
+P0: [0.5,0,0,0,0,0, # north
+     0.5,0,0,0,0,0, # east
+     0.1,0,0,0,0,0, # heading
+     0.01,0,0,0,0,0, # gyro bias
+     0.01] # velocity bias
+Qx: [0.01,0,0,0,0,0, # north
+     0.01,0,0,0,0,0, # east
+     0.001,0,0,0,0,0, # heading
+     0.001,0,0,0,0,0, # gyro bias
+     0.001] # velocity bias
+Qu: [0.001,0,0, # gyro noise
+     0.0001] # velocity noise
+R_pose: [0.01,0,0,0, # north
+         0.01,0,0,0, # east
+         0.01] # heading
+lambda: [1, # north
+         1, # east
+         1, # heading
+         0, # gyro bias
+         0] # velocity bias
