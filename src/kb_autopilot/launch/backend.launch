@@ -21,4 +21,20 @@
   <node name="geometry_check" pkg="geometry_check"      type="geometry_check_node" 	output="screen"/>
   <node name="rgbd_cache"     pkg="rgbd_cache"          type="rgbd_cache_node"     	output="screen"/>
   <node name="hex_map"        pkg="hex_map"             type="hex_map_node"     	output="screen"/>
+
+
+  <!-- KF Factory -->
+  <node name="kf_factory" pkg="openfabmap" type="keyframe_factory_node" output="screen" args="_image_transport:=compressed">
+  	<remap from="state" to="ekf_state"/>
+  	<remap from="pose" to="bleh"/>
+  </node>
+
+  <!-- Estimator -->
+  <rosparam command="load" file="$(find kb_autopilot)/param/ekf.yaml"/>
+  <node name="ekf" pkg="kb_autopilot" type="ekf_node" output="screen"/>
+
+  <!-- rosbag -->
+  <node name="rosbag" pkg="rosbag" type="play" output="log" args="/home/superjax/collect6.bag"/>
+
+
 </launch>
