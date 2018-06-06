@@ -34,6 +34,7 @@ private:
   ros::NodeHandle nh_, nh_private_;
   message_filters::Subscriber<kb_utils::Servo_Command> cmd_sub_;
   message_filters::Subscriber<kb_utils::Encoder> enc_sub_;
+  message_filters::Synchronizer<MySyncPolicy> sync_;
   ros::Subscriber pose_sub_;
   ros::Publisher state_pub_;
 
@@ -55,8 +56,13 @@ private:
   // functions
   void propCallback(const kb_utils::Servo_CommandConstPtr& servo_msg, const kb_utils::EncoderConstPtr& encoder_msg);
   void update(const geometry_msgs::Vector3StampedConstPtr& msg);
+  void publishState();
 
 };
+
+
+
+/*======== functions for importing from ROS parameter server ========*/
 
 template <typename T1, typename T2>
 void rosImportScalar(ros::NodeHandle nh, std::string param, T2& value, T1 default_value)
@@ -87,6 +93,8 @@ void rosImportMatrix(ros::NodeHandle nh, std::string param, Eigen::MatrixBase<T2
     for (unsigned j = 0; j < mat.cols(); j++)
       mat(i,j) = vec[mat.cols()*i+j];
 }
+
+
 
 } // namespace ekf
 

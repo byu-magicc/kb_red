@@ -7,7 +7,8 @@ EKF::EKF() :
   nh_(""),
   nh_private_("~"),
   cmd_sub_(nh_, "/safety_pilot", 1),
-  enc_sub_(nh_, "/encoder", 1)
+  enc_sub_(nh_, "/encoder", 1),
+  sync_(MySyncPolicy(10), cmd_sub_, enc_sub_)
 {
   // retrieve parameters from ROS parameter server
   rosImportMatrix<double>(nh_, "x0", x_);
@@ -31,12 +32,11 @@ EKF::EKF() :
   H_pose_.block<3,3>(0,0) = Eigen::MatrixXd::Identity(3,3);
 
   // set up ROS subscribers
-  message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), cmd_sub_, enc_sub_);
-  sync.registerCallback(std::bind(&EKF::propCallback, this, std::placeholders::_1, std::placeholders::_2));
+  sync_.registerCallback(std::bind(&EKF::propCallback, this, std::placeholders::_1, std::placeholders::_2));
   pose_sub_ = nh_.subscribe("/pose", 1, &EKF::update, this);
 
   // set up ROS publishers
-  state_pub_ = nh_.advertise<kb_autopilot::State>("state", 1);
+  state_pub_ = nh_.advertise<kb_autopilot::State>("/ekf_state", 1);
 }
 
 
@@ -91,6 +91,9 @@ void EKF::propCallback(const kb_utils::Servo_CommandConstPtr& servo_msg, const k
   // propagate the state
   x_ += f*dt;
   P_ = (A*P_+P_*A.transpose()+B_*Qu_*B_.transpose()+Qx_)*dt;
+
+  // publish the current state
+  publishState();
 }
 
 
@@ -104,6 +107,22 @@ void EKF::update(const geometry_msgs::Vector3StampedConstPtr& msg)
   Eigen::Matrix<double,8,3> K = P_*H_pose_.transpose()*(H_pose_*P_*H_pose_.transpose()+R_pose_).inverse();
   x_ += lambda_.cwiseProduct(K*(z-hx));
   P_ -= Lambda_.cwiseProduct(K*H_pose_*P_);
+}
+
+
+void EKF::publishState()
+{
+  kb_autopilot::State msg;
+  msg.p_north = x_(0); // north position (m)
+  msg.p_east =  x_(1); // east position (m)
+  msg.psi =     x_(2); // unwrapped yaw angle (rad)
+  msg.u =       x_(3); // body fixed forward velocity (m/s)
+  msg.b_u =     x_(4); // velocity bias
+  msg.L =       x_(5); // length between axles on the vehicle
+  msg.a =       x_(6); // servo to steering angle scale
+  msg.b_s =     x_(7); // servo steering angle bias
+  msg.psi_deg = x_(2)*180/M_PI; // unwrapped yaw angle (deg)
+  state_pub_.publish(msg);
 }
 
 
