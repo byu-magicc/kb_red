@@ -7,3 +7,21 @@
 [submodule "src/timed_roslaunch"]
 	path = src/timed_roslaunch
 	url = https://github.com/MoriKen254/timed_roslaunch.git
+[submodule "src/common_ros"]
+	path = src/common_ros
+	url = git@magiccvs.byu.edu:Jerel/common_ros.git
+[submodule "src/openfabmap"]
+	path = src/openfabmap
+	url = git@magiccvs.byu.edu:relative_nav/openfabmap.git
+[submodule "src/rgbd_cache"]
+	path = src/rgbd_cache
+	url = git@magiccvs.byu.edu:relative_nav/rgbd_cache.git
+[submodule "src/geometry_check"]
+	path = src/geometry_check
+	url = git@magiccvs.byu.edu:relative_nav/geometry_check.git
+[submodule "src/hex_map"]
+	path = src/hex_map
+	url = git@magiccvs.byu.edu:relative_nav/hex_map.git
+[submodule "src/relative_nav"]
+	path = src/relative_nav
+	url = git@magiccvs.byu.edu:relative_nav/relative_nav.git
