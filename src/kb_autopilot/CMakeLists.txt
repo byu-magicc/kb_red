@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_filters
   common_ros
 )
+find_package(Eigen3 REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -111,7 +112,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
   LIBRARIES common_cpp
-  CATKIN_DEPENDS common_ros
+  CATKIN_DEPENDS common_ros geometry_msgs message_generation roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -124,7 +125,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${Eigen3_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -157,6 +158,18 @@ target_link_libraries(ekf_node common_cpp ${catkin_LIBRARIES})
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+add_executable(path_follower
+            src/path_follower_example.cpp
+            src/path_follower_base.cpp)
+add_dependencies(path_follower ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
+target_link_libraries(path_follower ${catkin_LIBRARIES})
+
+add_executable(path_manager
+            src/path_manager_base.cpp
+            src/path_manager_example.cpp)
+add_dependencies(path_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(path_manager ${catkin_LIBRARIES})
 
 #############
 ## Install ##

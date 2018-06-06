@@ -2,14 +2,14 @@
 #define PATH_FOLLOWER_BASE_H
 
 #include <ros/ros.h>
-#include <rosplane_msgs/State.h>
-#include <rosplane_msgs/Controller_Commands.h>
+#include <kb_autopilot/State.h>
+#include <kb_autopilot/Controller_Commands.h>
 #include <dynamic_reconfigure/server.h>
-#include <rosplane/FollowerConfig.h>
-#include <rosplane_msgs/Current_Path.h>
+//#include <kb_autopilot/FollowerConfig.h>
+#include <kb_autopilot/Current_Path.h>
 
 
-namespace rosplane
+namespace kb_autopilot
 {
 
 enum class path_type
@@ -29,7 +29,7 @@ protected:
   struct input_s
   {
     enum path_type p_type;
-    float Va_d;
+    float u_d;
     float r_path[3];
     float q_path[3];
     float c_orbit[3];
@@ -37,22 +37,19 @@ protected:
     int lam_orbit;
     float pn;               /** position north */
     float pe;               /** position east */
-    float h;                /** altitude */
-    float Va;               /** airspeed */
-    float chi;              /** course angle */
+    float u;               /** speed */
+    float psi;              /** heading angle */
   };
 
   struct output_s
   {
-    double Va_c;             /** commanded airspeed (m/s) */
-    double h_c;              /** commanded altitude (m) */
-    double chi_c;            /** commanded course (rad) */
-    double phi_ff;           /** feed forward term for orbits (rad) */
+    double u_c;             /** commanded speed (m/s) */
+    double psi_c;            /** commanded heading (rad) */
   };
 
   struct params_s
   {
-    double chi_infty;
+    double psi_infty;
     double k_path;
     double k_orbit;
   };
@@ -70,18 +67,18 @@ private:
   double update_rate_ = 100.0;
   ros::Timer update_timer_;
 
-  rosplane_msgs::Controller_Commands controller_commands_;
+  kb_autopilot::Controller_Commands controller_commands_;
   struct params_s  params_;            /**< params */
   struct input_s input_;
 
-  void vehicle_state_callback(const rosplane_msgs::StateConstPtr &msg);
+  void vehicle_state_callback(const kb_autopilot::StateConstPtr &msg);
   bool state_init_;
-  void current_path_callback(const rosplane_msgs::Current_PathConstPtr &msg);
+  void current_path_callback(const kb_autopilot::Current_PathConstPtr &msg);
   bool current_path_init_;
 
-  dynamic_reconfigure::Server<rosplane::FollowerConfig> server_;
-  dynamic_reconfigure::Server<rosplane::FollowerConfig>::CallbackType func_;
-  void reconfigure_callback(rosplane::FollowerConfig &config, uint32_t level);
+//  dynamic_reconfigure::Server<kb_autopilot::FollowerConfig> server_;
+//  dynamic_reconfigure::Server<kb_autopilot::FollowerConfig>::CallbackType func_;
+//  void reconfigure_callback(kb_autopilot::FollowerConfig &config, uint32_t level);
 
   void update(const ros::TimerEvent &);
 };

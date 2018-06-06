@@ -3,7 +3,7 @@
 
 #include "path_follower_base.h"
 
-namespace rosplane
+namespace kb_autopilot
 {
 
 class path_follower_example : public path_follower_base
