@@ -36,6 +36,7 @@ protected:
     // float chi_d;
     // bool  chi_valid;
     // float Va_d;
+    float u_d;
   };
 
   std::vector<waypoint_s> waypoints_;
@@ -53,7 +54,7 @@ protected:
   struct output_s
   {
     bool  flag;             /** Inicates strait line or orbital path (true is line, false is orbit) */
-    float Va_d;             /** Desired airspeed (m/s) */
+    float u_d;             /** Desired airspeed (m/s) */
     float r[2];             /** Vector to origin of straight line path (m) */
     float q[2];             /** Unit vector, desired direction of travel for line path */
     float c[2];             /** Center of orbital path (m) */

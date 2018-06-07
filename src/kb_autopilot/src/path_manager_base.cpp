@@ -43,6 +43,7 @@ void path_manager_base::new_waypoint_callback(const kb_autopilot::Waypoint &msg)
     waypoint_s currentwp;
     currentwp.w[0] = vehicle_state_.p_north;
     currentwp.w[1] = vehicle_state_.p_east;
+    currentwp.u_d = msg.u_d;
     waypoints_.clear();
     waypoints_.push_back(currentwp);
     num_waypoints_ = 1;
@@ -51,6 +52,7 @@ void path_manager_base::new_waypoint_callback(const kb_autopilot::Waypoint &msg)
   waypoint_s nextwp;
   nextwp.w[0]         = msg.w[0];
   nextwp.w[1]         = msg.w[1];
+  nextwp.u_d = msg.u_d;
   waypoints_.push_back(nextwp);
   num_waypoints_++;
 }
@@ -76,7 +78,7 @@ void path_manager_base::current_path_publish(const ros::TimerEvent &)
     current_path.path_type = current_path.LINE_PATH;
   else
     current_path.path_type = current_path.ORBIT_PATH;
-  current_path.Va_d = output.Va_d;
+  current_path.u_d = output.u_d;
   for (int i = 0; i < 2; i++)
   {
     current_path.r[i] = output.r[i];
