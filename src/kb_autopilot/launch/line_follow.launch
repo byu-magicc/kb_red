@@ -8,7 +8,7 @@
   </node>
 
   <node name="controller" pkg="kb_autopilot" type="controller.py" />
-  <node name="path_follower" pkg="kb_autopilot" type="path_follower">
+  <node name="path_follower" pkg="kb_autopilot" type="path_follower" output="screen">
     <param name="K_PATH" value="-1.0"/>
   </node>
   <!--<node name="controller_command_publisher" pkg="rostopic" type="rostopic"

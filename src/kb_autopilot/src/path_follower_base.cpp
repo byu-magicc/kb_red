@@ -60,12 +60,15 @@ void path_follower_base::current_path_callback(const kb_autopilot::Current_PathC
 
   input_.u_d = msg->u_d;
 
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < 2; i++)
   {
     input_.r_path[i] = msg->r[i];
     input_.q_path[i] = msg->q[i];
     input_.c_orbit[i] = msg->c[i];
   }
+  input_.r_path[2] = 0;
+  input_.q_path[2] = 0;
+  input_.c_orbit[2] = 0;
   input_.rho_orbit = msg->rho;
   input_.lam_orbit = msg->lambda;
   current_path_init_ = true;
