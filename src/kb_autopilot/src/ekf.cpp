@@ -35,6 +35,7 @@ EKF::EKF() :
 
   // set up ROS publishers
   state_pub_ = nh_.advertise<kb_autopilot::State>("/ekf_state", 1);
+  meas_pub_ = nh_.advertise<geometry_msgs::Vector3Stamped>("/gps_pos_head", 1);
 }
 
 
@@ -112,7 +113,7 @@ void EKF::insCallback(const nav_msgs::OdometryConstPtr& msg)
     heading_rate_ = msg->twist.twist.angular.z;
 
     // unpack estimated measurement of position and heading
-    Eigen::Vector3d z(msg->pose.pose.position.x,msg->pose.pose.position.y,q_i2b.yaw());
+    Eigen::Vector3d z(msg->pose.pose.position.x,msg->pose.pose.position.y,q_i2b.yaw()+M_PI);
     Eigen::Vector3d hx = x_.segment<3>(0);
 
     // residual error
@@ -126,7 +127,14 @@ void EKF::insCallback(const nav_msgs::OdometryConstPtr& msg)
 
     // don't allow more updates before propagation happens
     okay_to_update_ = false;
-    std::cout << "\n\n" << r << "\n\n";
+
+    // build measurement topic to publish position and heading measurements
+    geometry_msgs::Vector3Stamped gps_msg;
+    gps_msg.header = msg->header;
+    gps_msg.vector.x = z(0);
+    gps_msg.vector.y = z(1);
+    gps_msg.vector.z = wrapAngle(z(2))*180/M_PI;
+    meas_pub_.publish(gps_msg);
   }
 }
 

@@ -1,8 +1,8 @@
 ### ekf parameters ###
 
-x0: [-5, # north
-     -7, # east
-     -1.5, # heading
+x0: [-258, # north
+     -100, # east
+     0, # heading
      0, # gyro bias
      0] # velocity bias
 P0: [1,0,0,0,0,0, # north
@@ -23,5 +23,5 @@ R_pose: [0.01,0,0,0, # north
 lambda: [1, # north
          1, # east
          1, # heading
-         1, # gyro bias
-         1] # velocity bias
+         0, # gyro bias
+         0] # velocity bias

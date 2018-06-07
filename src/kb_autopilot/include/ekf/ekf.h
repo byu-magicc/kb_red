@@ -6,6 +6,7 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Vector3Stamped.h>
 #include <nav_msgs/Odometry.h>
 
 #include "kb_utils/Encoder.h"
@@ -31,7 +32,7 @@ private:
   // ROS
   ros::NodeHandle nh_, nh_private_;
   ros::Subscriber pose_sub_, ins_sub_, enc_sub_;
-  ros::Publisher state_pub_;
+  ros::Publisher state_pub_, meas_pub_;
 
   // EKF arrays
   Eigen::Matrix<double,5,1> x_;
