@@ -165,8 +165,10 @@ void EKF::publishState(double u)
   msg.p_north = x_(0); // north position (m)
   msg.p_east =  x_(1); // east position (m)
   msg.psi =     x_(2); // unwrapped yaw angle (rad)
-  msg.u =       u;     // body fixed forward velocity (m/s)
+  msg.b_r =     x_(3); // heading rate bias
   msg.b_u =     x_(4); // velocity bias
+  msg.u =       u;     // body fixed forward velocity (m/s)
+  
   msg.psi_deg = wrapAngle(x_(2))*180/M_PI; // unwrapped yaw angle (deg)
   state_pub_.publish(msg);
 }
