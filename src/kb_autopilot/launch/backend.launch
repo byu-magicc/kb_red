@@ -1,0 +1,40 @@
+<launch>
+
+ <rosparam subst_value="True">
+    fabmap:         { visualise: false,
+                      SelfMatchWindow: 5,
+                      vocab:     $(find openfabmap)/codebooks/R01/vocab.yml,
+                      clTree:    $(find openfabmap)/codebooks/R01/clTree.yml,
+                      trainbows: $(find openfabmap)/codebooks/R01/trainbows.yml }
+    geometry_check: { camera_info_rgb_path:   $(find relative_nav)/param/xtion_rgb.yaml ,
+                      camera_info_depth_path: $(find relative_nav)/param/xtion_depth.yaml }
+    rgbd_cache:     { camera_info_rgb_path:   $(find relative_nav)/param/xtion_rgb.yaml,
+                      camera_info_depth_path: $(find relative_nav)/param/xtion_rgb.yaml }
+    hex_map:        { visualization: true,
+                      robust_gps: true,
+                      robust_lc: true,
+                      optimization_rate: 1}
+  </rosparam>
+
+  <!--Backend-->
+  <node name="fabmap"         pkg="openfabmap"          type="run_node"            	output="screen"/>
+  <node name="geometry_check" pkg="geometry_check"      type="geometry_check_node" 	output="screen"/>
+  <node name="rgbd_cache"     pkg="rgbd_cache"          type="rgbd_cache_node"     	output="screen"/>
+  <node name="hex_map"        pkg="hex_map"             type="hex_map_node"     	output="screen"/>
+
+
+  <!-- KF Factory -->
+  <node name="kf_factory" pkg="openfabmap" type="keyframe_factory_node" output="screen">
+  	<remap from="state" to="ekf_state"/>
+  	<remap from="pose" to="bleh"/>
+  </node>
+
+  <!-- Estimator -->
+  <rosparam command="load" file="$(find kb_autopilot)/param/ekf.yaml"/>
+  <node name="ekf" pkg="kb_autopilot" type="ekf_node" output="screen"/>
+
+  <!-- rosbag -->
+  <node name="rosbag" pkg="rosbag" type="play" output="log" args="/home/superjax/collect6.bag"/>
+
+
+</launch>
