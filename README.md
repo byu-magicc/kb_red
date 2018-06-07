@@ -4,3 +4,11 @@ To build you'll need to either install the librealsense drivers (not necessary) 
 
 When cloning anew, don't forget to clone the submodules as well:
 `git submodule update --init --recursive`
+
+# Dependencies
+
+`ros-kinetic-camera-calibration-parsers`
+
+`ros-kinetic-libg2o`
+
+`libsuitesparse-dev`
