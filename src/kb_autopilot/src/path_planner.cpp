@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <kb_autopilot/Waypoint.h>
 
-#define num_waypoints 3
+#define num_waypoints 4
 
 int main(int argc, char **argv)
 {
@@ -11,11 +11,12 @@ int main(int argc, char **argv)
   ros::Publisher waypointPublisher = nh_.advertise<kb_autopilot::Waypoint>("waypoint_path", 10);
 
   float u = 1.5;
-  float pn1 = 1.0;//-231.0;
-  float pe1 = 1.0;//:-90.5;
+  float pn1 = -231.0;
+  float pe1 = -90.5;
   float wps[3*num_waypoints] =
   {
-    pn1, pe1, u,
+    pn1 - 10, pe1, u,
+    0.1, 0.1, u,//pn1, pe1, u,
     pn1, pe1 + 10, u,
     pn1 - 10, pe1 + 10, u,
   };
