@@ -47,7 +47,7 @@ private:
   // additional variables
   double t_prev_;
   double omega_v1_z_;
-  bool is_driving_;
+  bool is_driving_, okay_to_update_;
 
   // functions
   void insCallback(const nav_msgs::OdometryConstPtr& msg);

@@ -21,6 +21,7 @@ EKF::EKF() :
   t_prev_ = 0;
   omega_v1_z_ = 0;
   is_driving_ = false;
+  okay_to_update_ = false;
   B_.setZero();
   B_(3,0) = 1;
   B_(4,1) = 1;
@@ -80,6 +81,10 @@ void EKF::encoderCallback(const kb_utils::EncoderConstPtr& msg)
     // propagate the state
     x_ += f*dt;
     P_ = (A*P_+P_*A.transpose()+B_*Qu_*B_.transpose()+Qx_)*dt;
+
+    // allow an update to come through
+    // this is needed because ins updates happen at a higher rate than encoder
+    okay_to_update_ = true;
   }
 
   // publish the current state
@@ -89,7 +94,7 @@ void EKF::encoderCallback(const kb_utils::EncoderConstPtr& msg)
 
 void EKF::insCallback(const nav_msgs::OdometryConstPtr& msg)
 {
-  if (is_driving_)
+  if (is_driving_ && okay_to_update_)
   {
     // extract rotation rate about vertical axis for propagation
     common::Quaternion q_i2b(msg->pose.pose.orientation.w,
@@ -117,31 +122,40 @@ void EKF::insCallback(const nav_msgs::OdometryConstPtr& msg)
     Eigen::Matrix<double,5,3> K = P_*H_pose_.transpose()*(H_pose_*P_*H_pose_.transpose()+R_pose_).inverse();
     x_ += lambda_.cwiseProduct(K*r);
     P_ -= Lambda_.cwiseProduct(K*H_pose_*P_);
+
+    // don't allow more updates before propagation happens
+    okay_to_update_ = false;
   }
 }
 
 
 void EKF::poseUpdate(const geometry_msgs::PoseStampedConstPtr& msg)
 {
-  // extract heading from quaternion
-  tf::Pose pose;
-  tf::poseMsgToTF(msg->pose, pose);
-  double psi_meas = tf::getYaw(pose.getRotation());
+  if (is_driving_ && okay_to_update_)
+  {
+    // extract heading from quaternion
+    tf::Pose pose;
+    tf::poseMsgToTF(msg->pose, pose);
+    double psi_meas = tf::getYaw(pose.getRotation());
 
-  // unpack estimated measurement
-  Eigen::Vector3d z(msg->pose.position.x,msg->pose.position.y,psi_meas);
-  Eigen::Vector3d hx = x_.segment<3>(0);
+    // unpack estimated measurement
+    Eigen::Vector3d z(msg->pose.position.x,msg->pose.position.y,psi_meas);
+    Eigen::Vector3d hx = x_.segment<3>(0);
 
-  // residual error
-  Eigen::Vector3d r = z-hx;
+    // residual error
+    Eigen::Vector3d r = z-hx;
 
-  // make sure to use shortest angle in heading update
-  r(2) = wrapAngle(r(2));
+    // make sure to use shortest angle in heading update
+    r(2) = wrapAngle(r(2));
 
-  // apply update
-  Eigen::Matrix<double,5,3> K = P_*H_pose_.transpose()*(H_pose_*P_*H_pose_.transpose()+R_pose_).inverse();
-  x_ += lambda_.cwiseProduct(K*r);
-  P_ -= Lambda_.cwiseProduct(K*H_pose_*P_);
+    // apply update
+    Eigen::Matrix<double,5,3> K = P_*H_pose_.transpose()*(H_pose_*P_*H_pose_.transpose()+R_pose_).inverse();
+    x_ += lambda_.cwiseProduct(K*r);
+    P_ -= Lambda_.cwiseProduct(K*H_pose_*P_);
+
+    // don't allow more updates before propagation happens
+    okay_to_update_ = false;
+  }
 }
 
 
