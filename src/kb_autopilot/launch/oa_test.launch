@@ -1,0 +1,11 @@
+<launch>
+
+  <node pkg="rosbag" type="play" name="bag_player"
+    args="/home/gary/to_brigham1_thurs.bag -q --clock --pause" output="screen">
+  </node>
+
+  <node name="keyframe_devide" type="keyframe_divide.py" pkg="kb_autopilot"/>
+
+  <node name="obstacle_avoid" type="obstacle_avoider" pkg="kb_autopilot" output="screen"/>
+
+</launch>

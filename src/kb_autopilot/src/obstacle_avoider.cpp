@@ -13,6 +13,7 @@ obstacle_avoider::obstacle_avoider():
     vehicle_state_sub_ = nh_.subscribe<kb_autopilot::State>("state", 1, &obstacle_avoider::vehicle_state_callback, this);
     controller_commands_sub_ = nh_.subscribe<kb_autopilot::Controller_Commands>("controller_commands", 1,
                         &obstacle_avoider::controller_commands_callback, this);
+    depth_image_sub_ = nh_.subscribe("depth", 1, &obstacle_avoider::depth_callback, this);
     avoid_commands_pub_ = nh_.advertise<kb_autopilot::Controller_Commands>("avoid_commands", 1);
 
     nh_private_.param<double>("depth_update_rate", update_rate_, 3.0);
@@ -24,6 +25,11 @@ void obstacle_avoider::vehicle_state_callback(const kb_autopilot::StateConstPtr 
   p_e_ = msg->p_east;               /** position east */
 
   state_init_ = true;
+}
+
+void obstacle_avoider::depth_callback(const sensor_msgs::ImagePtr &msg)
+{
+    ROS_INFO("Got a depth image");
 }
 
 void obstacle_avoider::controller_commands_callback(const kb_autopilot::Controller_CommandsConstPtr &msgi)
