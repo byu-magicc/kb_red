@@ -7,9 +7,6 @@
 [submodule "src/timed_roslaunch"]
 	path = src/timed_roslaunch
 	url = https://github.com/MoriKen254/timed_roslaunch.git
-[submodule "src/common_ros"]
-	path = src/common_ros
-	url = git@magiccvs.byu.edu:Jerel/common_ros.git
 [submodule "src/openfabmap"]
 	path = src/openfabmap
 	url = git@magiccvs.byu.edu:relative_nav/openfabmap.git
