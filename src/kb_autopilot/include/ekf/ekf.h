@@ -40,13 +40,12 @@ private:
   Eigen::Matrix<double,2,2> Qu_;
   Eigen::Matrix<double,3,5> H_pose_;
   Eigen::Matrix<double,3,3> R_pose_;
-  double R_v_;
   Eigen::Matrix<double,5,1> lambda_;
   Eigen::Matrix<double,5,5> Lambda_;
 
   // additional variables
   double t_prev_;
-  double omega_v1_z_;
+  double heading_rate_;
   bool is_driving_, okay_to_update_;
 
   // functions
