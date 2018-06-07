@@ -33,7 +33,7 @@
   <node name="ekf" pkg="kb_autopilot" type="ekf_node" output="screen"/>
 
   <!-- KF Factory -->
-  <node name="kf_factory" pkg="openfabmap" type="keyframe_factory_node" output="screen">
+  <node name="kf_factory" pkg="kf_factory" type="keyframe_factory_node" output="screen">
     <remap from="state" to="ekf_state"/>
     <remap from="pose" to="bleh"/>
   </node>
