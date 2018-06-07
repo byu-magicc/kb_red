@@ -24,17 +24,17 @@
 
 
   <!-- KF Factory -->
-  <node name="kf_factory" pkg="openfabmap" type="keyframe_factory_node" output="screen">
+<!--   <node name="kf_factory" pkg="openfabmap" type="keyframe_factory_node" output="screen">
   	<remap from="state" to="ekf_state"/>
   	<remap from="pose" to="bleh"/>
-  </node>
+  </node> -->
 
   <!-- Estimator -->
   <rosparam command="load" file="$(find kb_autopilot)/param/ekf.yaml"/>
   <node name="ekf" pkg="kb_autopilot" type="ekf_node" output="screen"/>
 
   <!-- rosbag -->
-  <node name="rosbag" pkg="rosbag" type="play" output="log" args="/home/superjax/collect6.bag"/>
+  <node name="rosbag" pkg="rosbag" type="play" output="log" args="/home/superjax/rosbag/to_brigham1_thurs.bag"/>
 
 
 </launch>
