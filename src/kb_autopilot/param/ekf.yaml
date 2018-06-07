@@ -1,8 +1,8 @@
 ### ekf parameters ###
 
-x0: [-5, # north
-     -9, # east
-     1.6, # heading
+x0: [-231, # north
+     -98, # east
+     0, # heading
      0, # gyro bias
      0] # velocity bias
 P0: [0.5,0,0,0,0,0, # north
