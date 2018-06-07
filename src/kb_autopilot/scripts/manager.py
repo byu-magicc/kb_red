@@ -8,15 +8,16 @@ from kb_autopilot.msg import Manager_State
 from kb_utils.msg import Encoder
 from kb_autopilot.msg import Controller_Commands
 from kb_utils.msg import Command
+from kb_autopilot.msg import Waypoint
 
-#TODO Import and publish way points, find out home coordinates, verify thresholds for closeness to brigham to switch states
+#TODO Import waypoints from somewhere
 
 
 
 class Manager:
-    BACK_UP_DIST = 2.0
-    HOME_N = -100.0 #Need to find these out
-    HOME_E = 40.0
+    BACK_UP_DIST = 4.5
+    HOME_N = -385.5
+    HOME_E = 65.3
 
     def __init__(self):
         self.state_sub = rospy.Subscriber('state', State, self.state_callback, queue_size = 1)
@@ -26,12 +27,12 @@ class Manager:
 
         self.manager_pub = rospy.Publisher('manager_state', Manager_State, queue_size = 1)
         self.controller_cmds_pub = rospy.Publisher('controller_commands_out', Controller_Commands, queue_size = 1)
-        # self.cmds_pub = rospy.Publisher('command_out', Command, queue_size = 1)
+        self.waypoint_pub = rospy.Publisher('waypoint', Waypoint, queue_size = 150)
 
         self.states = enum(START=1, KISS=2, REVERSE=3, HOME=4, FINISHED=5)
         self.state = self.states.START
 
-        self.range_n = 5
+        self.range_n = 10
         self.range_e = 3
 
         self.v_enc = 0.0
@@ -53,6 +54,16 @@ class Manager:
 
     def publish_waypoints(self, points):
         #Do something
+        msg = Waypoint()
+        for i in range(len(points)):
+            if i == 0:
+                msg.set_current = True
+                msg.clear_wp_list = True
+            else:
+                msg.set_current = False
+                msg.clear_wp_list = False
+            msg.w = point
+            self.waypoint_pub.publish(msg)
 
     def state_callback(self, msg):
         self.psi = msg.psi
@@ -72,7 +83,7 @@ class Manager:
 
     def cmds_callback(self, msg):
         self.v_cmd = msg.throttle
-        steer = msg.steer
+
 
     def encoder_callback(self, msg):
         self.v_enc = msg.vel
@@ -85,7 +96,7 @@ class Manager:
                 vel.u_c = -1.0
                 vel.aux_valid = False
                 self.controller_cmds_pub.publish(vel)
-            elif: abs(self.dist) >= BACK_UP_DIST and abs(self.psi + np.pi/2.0) > (10.0 * np.pi/180):
+            elif abs(self.dist) >= BACK_UP_DIST and abs(self.psi + np.pi/2.0) > (10.0 * np.pi / 180.0):
                 vel = Controller_Commands()
                 vel.psi_c = -np.pi/2.0
                 vel.u_c = 1.0
@@ -94,6 +105,7 @@ class Manager:
             else:
                 self.state = self.states.HOME
                 self.publish_state()
+                #Publish waypoints
 
         if self.state == self.states.KISS:
             if self.v_enc < .01 and self.v_cmd != 0.0:
@@ -114,6 +126,7 @@ class Manager:
 
     def run(self):
         self.publish_state()
+        #publish Waypoints
         while not rospy.is_shutdown():
             rospy.spin()
 
