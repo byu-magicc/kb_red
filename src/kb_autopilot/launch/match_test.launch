@@ -1,0 +1,9 @@
+<launch>
+
+  <node name="bagplay" pkg="rosbag" type="play" output="screen" args="/home/jerel/Desktop/small_loop.bag -s 7"/>
+
+  <node name="imageview" pkg="rqt_image_view" type="rqt_image_view" output="screen"/>
+
+  <node name="vserv_node" pkg="kb_autopilot" type="vserv_node" output="screen"/>
+
+</launch>

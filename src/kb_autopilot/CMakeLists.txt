@@ -15,8 +15,23 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   message_filters
   common_ros
+  cv_bridge
 )
 find_package(Eigen3 REQUIRED)
+find_package(OpenCV REQUIRED)
+
+option(USE_GPU "Enable CUDA support." ON)
+if(USE_GPU)
+  message(STATUS "==> CUDA-enabled OpenCV requested")
+  if(OpenCV_CUDA_VERSION)
+    message(STATUS "+++ CUDA-enabled OpenCV found, CUDA Version: " ${OpenCV_CUDA_VERSION})
+    add_definitions(-DOPENCV_CUDA)
+  else()
+    string(ASCII 27 ESC)
+    message(STATUS "${ESC}[1;31m+++${ESC}[0m" " CUDA-enabled OpenCV not found")
+  endif()
+endif()
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -126,6 +141,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -143,6 +159,9 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(ekf_node src/ekf_node.cpp src/ekf.cpp)
 target_link_libraries(ekf_node common_cpp ${catkin_LIBRARIES})
+
+add_executable(vserv_node src/vserv_node.cpp src/vserv.cpp)
+target_link_libraries(vserv_node common_cpp ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
