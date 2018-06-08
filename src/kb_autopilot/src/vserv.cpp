@@ -15,11 +15,11 @@ VSERV::VSERV() :
   t_prev_ = 0;
   new_keyframe_ = true;
   klt_win_size_ = cv::Size(31,31);
-  klt_max_level_ = 3;
+  klt_max_level_ = 2;
   klt_term_crit_ = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01);
 
   // instantiate feature detector
-  detector_ = cv::GFTTDetector::create(1000,0.001,30,3,false,0.04);
+  detector_ = cv::GFTTDetector::create(1000,0.01,30,3,false,0.04);
 
   // set up ROS subscribers
   image_sub_ = nh_.subscribe("/camera/color/image_raw/compressed", 1, &VSERV::imageCallback, this);
@@ -40,7 +40,7 @@ void VSERV::imageCallback(const sensor_msgs::CompressedImageConstPtr &msg)
   catch (cv_bridge::Exception& e)
   {
     // ROS_ERROR("Could not convert from '%s' to 'mono8'.", msg->encoding.c_str());
-    ROS_ERROR("Couldn't convert image.");
+    ROS_ERROR("cv_bridge couldn't convert image message to OpenCV.");
   }
 
   // TODO: need to populate keyframe image at some point
@@ -73,7 +73,7 @@ void VSERV::imageCallback(const sensor_msgs::CompressedImageConstPtr &msg)
   // filter the bad matches
   cv::Mat inlier_mask, homography, F;
   std::vector<cv::Point2f> good_matches1, good_matches2;
-  if(matches1.size() >= 4) {
+  if(matches1.size() >= 8) {
     // homography = cv::findHomography(matches1, matches2, CV_RANSAC, 2, inlier_mask);
     F = cv::findFundamentalMat(matches1, matches2, CV_FM_RANSAC, 3, 0.99, inlier_mask);
     for(unsigned i = 0; i < matches1.size(); i++) {
@@ -117,7 +117,7 @@ void VSERV::imageCallback(const sensor_msgs::CompressedImageConstPtr &msg)
     cv::waitKey(1);
   }
   else {
-    ROS_WARN("Too few matches for homography. New keyframe!\n");
+    ROS_WARN("Too few matches for fundamental matrix. New keyframe!\n");
     new_keyframe_ = true;
   }
 }
