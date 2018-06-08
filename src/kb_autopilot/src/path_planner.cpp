@@ -8,20 +8,24 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "simple_path_planner");
 
   ros::NodeHandle nh_;
+  ros::NodeHandle nh_ns_("~");
   ros::Publisher waypointPublisher = nh_.advertise<kb_autopilot::Waypoint>("waypoint_path", 10);
 
-  float u = 1.5;
-  float pn1 = -230.0;
-  float pe1 = -100.0;
-  float wps[3*num_waypoints] =
-  {
-    pn1 - 10, pe1, u,
-    pn1, pe1, u,
-    pn1, pe1 + 10, u,
-    pn1 - 10, pe1 + 10, u,
-  };
+//  float u = 1.5;
+//  float pn1 = -230.0;
+//  float pe1 = -100.0;
+//  float wps[3*num_waypoints] =
+//  {
+//    pn1 - 10, pe1, u,
+//    pn1, pe1, u,
+//    pn1, pe1 + 10, u,
+//    pn1 - 10, pe1 + 10, u,
+//  };
+  std::vector<double> wps;
+  nh_ns_.getParam("waypoint_list",wps);
 
-  for (int i(0); i < num_waypoints; i++)
+//  for (int i(0); i < num_waypoints; i++)
+  for (int i(0); i < wps.size()/3; i++)
   {
     ros::Duration(0.5).sleep();
 

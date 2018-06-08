@@ -22,7 +22,9 @@
   <!--<node name="current_path_publisher" pkg="rostopic" type="rostopic"
       args="pub current_path kb_autopilot/Current_Path '1' '2.0'  '[-240.0, -90.5]'  '[0.0, 1.0]'  '[0.0, 0.0]'  '100.0' '1'"/>-->
   <node name="path_manager" pkg="kb_autopilot" type="path_manager" output="screen"/>
-  <node name="waypoint_publisher" pkg="kb_autopilot" type="path_planner"/>
+  <node name="waypoint_publisher" pkg="kb_autopilot" type="path_planner">
+    <rosparam command="load" file="$(find kb_autopilot)/param/waypoint_list.yaml" />
+  </node>
 
   <!--KB Driver-->
   <node name="teensy" pkg="kb_utils" type="kb_driver.py" args="/dev/ttyACM0"/>

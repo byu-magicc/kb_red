@@ -51,7 +51,7 @@ for topic, msg, t in tqdm(inbag.read_messages(), total=inbag.get_message_count()
         position.append([msg.pose.pose.position.x, msg.pose.pose.position.y])
 
 position = np.array(position) ## NE position in meters
-origin = [40.250507, -111.649276] # [40.020503, -111.649279] #
+origin = [40.250507, -111.649278] # [40.020503, -111.649279] #
 
 lla = convert_NED_to_LLa(position, origin)
 
