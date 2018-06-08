@@ -9,7 +9,9 @@
     geometry_check: { camera_info_rgb_path:   $(find relative_nav)/param/xtion_rgb.yaml ,
                       camera_info_depth_path: $(find relative_nav)/param/xtion_depth.yaml }
     rgbd_cache:     { camera_info_rgb_path:   $(find relative_nav)/param/xtion_rgb.yaml,
-                      camera_info_depth_path: $(find relative_nav)/param/xtion_rgb.yaml }
+                      camera_info_depth_path: $(find relative_nav)/param/xtion_rgb.yaml,
+                      cache_path: cache,
+                      overwrite_cache: true }
     hex_map:        { visualization: true,
                       robust_gps: true,
                       robust_lc: true,
@@ -20,21 +22,26 @@
   <node name="fabmap"         pkg="openfabmap"          type="run_node"            	output="screen"/>
   <node name="geometry_check" pkg="geometry_check"      type="geometry_check_node" 	output="screen"/>
   <node name="rgbd_cache"     pkg="rgbd_cache"          type="rgbd_cache_node"     	output="screen"/>
-  <node name="hex_map"        pkg="hex_map"             type="hex_map_node"     	output="screen"/>
+  <node name="hex_map"        pkg="hex_map"             type="hex_map_node"     	output="log"/>
 
 
   <!-- KF Factory -->
 <!--   <node name="kf_factory" pkg="kf_factory" type="keyframe_factory_node" output="screen">
   	<remap from="state" to="ekf_state"/>
   	<remap from="pose" to="bleh"/>
+  	<remap from="keyframe" to="bleh2"/>
+  	<remap from="relative_state" to="bleh3"/>
+  	<remap from="edge" to="bleh4"/>
+  	<remap from="is_flying" to="bleh5"/>
   </node> -->
 
   <!-- Estimator -->
   <rosparam command="load" file="$(find kb_autopilot)/param/ekf.yaml"/>
-  <node name="ekf" pkg="kb_autopilot" type="ekf_node" output="screen"/>
+  <node name="ekf" pkg="kb_autopilot" type="ekf_node" output="log"/>
 
   <!-- rosbag -->
-  <node name="rosbag" pkg="rosbag" type="play" output="log" args="/home/superjax/rosbag/to_brigham1_thurs.bag"/>
+  <node name="rosbag" pkg="rosbag" type="play" output="log" args="/home/superjax/rosbag/small_loop.new.bag -s 6"/>
+  <!-- <node name="rosbag" pkg="rosbag" type="play" output="log" args="/home/superjax/rosbag/small_loop.small.bag -s 6 -r 100 -d 1"/> -->
 
 
 </launch>

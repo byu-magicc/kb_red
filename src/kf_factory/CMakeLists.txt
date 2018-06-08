@@ -16,6 +16,9 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(OpenCV 3 REQUIRED)
 
+catkin_package(
+  )
+
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
