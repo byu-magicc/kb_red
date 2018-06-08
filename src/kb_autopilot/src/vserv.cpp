@@ -13,11 +13,13 @@ VSERV::VSERV() :
 
   // other parameters and constants
   t_prev_ = 0;
+  new_keyframe_ = true;
+  klt_win_size_ = cv::Size(31,31);
+  klt_max_level_ = 3;
+  klt_term_crit_ = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01);
 
   // instantiate feature detector
   detector_ = cv::GFTTDetector::create(1000,0.001,30,3,false,0.04);
-  descriptor_ = cv::ORB::create();
-  matcher_ = cv::DescriptorMatcher::create("BruteForce-Hamming");
 
   // set up ROS subscribers
   image_sub_ = nh_.subscribe("/camera/color/image_raw/compressed", 1, &VSERV::imageCallback, this);
@@ -43,56 +45,47 @@ void VSERV::imageCallback(const sensor_msgs::CompressedImageConstPtr &msg)
 
   // TODO: need to populate keyframe image at some point
   // just use previous image for testing
-  if (kf_img_.empty()) {
+  if (new_keyframe_) {
     img.copyTo(kf_img_);
-    detector_->detect(kf_img_,kf_pts_,cv::noArray());
-    descriptor_->compute(kf_img_,kf_pts_,kf_desc_);
+    std::vector<cv::KeyPoint> kfpts;
+    detector_->detect(kf_img_,kfpts,cv::noArray());
+    cv::KeyPoint::convert(kfpts,kf_pts_);
+    new_keyframe_ = false;
   }
 
-  // collect keypoints and descriptors of current image
-  std::vector<cv::KeyPoint> pts;
-  cv::Mat desc;
-  detector_->detect(img,pts,cv::noArray());
-  descriptor_->compute(img,pts,desc);
+  // calculate the optical flow
+  std::vector<cv::Point2f> pts;
+  std::vector<uchar> flow_inlier;
+  cv::calcOpticalFlowPyrLK(kf_img_, img, kf_pts_, pts, flow_inlier, cv::noArray(), klt_win_size_, klt_max_level_, klt_term_crit_);
 
-  // find matches between current image and keyframe image
-  std::vector<cv::DMatch> matches;
-  std::vector<cv::KeyPoint> matched1, matched2;
-  matcher_->match(kf_desc_, desc, matches);
-  for (int i = 0; i < kf_desc_.rows; i++) {
-    if (matches[i].distance <= 10.0) {
-      matched1.push_back(kf_pts_[matches[i].queryIdx]);
-      matched2.push_back(    pts[matches[i].trainIdx]);
+  // collect the matched features and their indices
+  std::vector<cv::Point2f> matches1,matches2;
+  std::vector<int> klt_matches_idx;
+  for (int i = 0; i < flow_inlier.size(); i++)
+  {
+    if (flow_inlier[i])
+    {
+      matches1.push_back(pts[i]);
+      matches2.push_back(kf_pts_[i]);
     }
   }
 
-  // // find matches between current image and keyframe image
-  // std::vector< std::vector<cv::DMatch> > matches;
-  // std::vector<cv::KeyPoint> matched1, matched2;
-  // matcher_->knnMatch(kf_desc_, desc, matches, 2);
-  // for(unsigned i = 0; i < matches.size(); i++) {
-  //   if(matches[i][0].distance < 0.8 * matches[i][1].distance) {
-  //     matched1.push_back(kf_pts_[matches[i][0].queryIdx]);
-  //     matched2.push_back(    pts[matches[i][0].trainIdx]);
-  //   }
-  // }
-
   // filter the bad matches
-  cv::Mat inlier_mask, homography;
-  std::vector<cv::KeyPoint> inliers1, inliers2;
-  std::vector<cv::Point2f> matched1_pt2f, matched2_pt2f;
-  std::vector<cv::DMatch> inlier_matches;
-  if(matched1.size() >= 4) {
-    cv::KeyPoint::convert(matched1, matched1_pt2f);
-    cv::KeyPoint::convert(matched2, matched2_pt2f);
-    homography = cv::findHomography(matched1_pt2f, matched2_pt2f, CV_RANSAC, 5, inlier_mask);
-    for(unsigned i = 0; i < matched1.size(); i++) {
+  cv::Mat inlier_mask, homography, F;
+  std::vector<cv::Point2f> good_matches1, good_matches2;
+  if(matches1.size() >= 4) {
+    // homography = cv::findHomography(matches1, matches2, CV_RANSAC, 2, inlier_mask);
+    F = cv::findFundamentalMat(matches1, matches2, CV_FM_RANSAC, 3, 0.99, inlier_mask);
+    for(unsigned i = 0; i < matches1.size(); i++) {
       if(inlier_mask.at<uchar>(i)) {
-        int new_i = static_cast<int>(inliers1.size());
-        inliers1.push_back(matched1[i]);
-        inliers2.push_back(matched2[i]);
-        inlier_matches.push_back(cv::DMatch(new_i, new_i, 0));
+        good_matches1.push_back(matches1[i]);
+        good_matches2.push_back(matches2[i]);
       }
+    }
+
+    // create new keyframe if too few inliers
+    if (good_matches1.size() < 30) {
+      new_keyframe_ = true;
     }
 
     // build image jacobian
@@ -112,20 +105,21 @@ void VSERV::imageCallback(const sensor_msgs::CompressedImageConstPtr &msg)
     twist_msg.twist.angular.z = 0;
     twist_pub_.publish(twist_msg);
 
-    cv::Mat img_draw;
-    cv::drawMatches(img,pts,kf_img_,kf_pts_,inlier_matches,img_draw,cv::Scalar::all(-1),cv::Scalar::all(-1),std::vector<char>(),cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
-    cv::namedWindow("matches", CV_WINDOW_AUTOSIZE);
-    cv::imshow("matches", img_draw);
+    // convert image to color
+    cv::Mat img_plot = img.clone();
+    cv::cvtColor(img, img_plot, cv::COLOR_GRAY2BGR, 3);
+    for (int i = 0; i < good_matches1.size(); i++)
+    {
+      cv::circle(img_plot, good_matches1[i], 5, cv::Scalar(0,255,0), 1);
+    }
+    cv::namedWindow("Tracked Features", CV_WINDOW_AUTOSIZE);
+    cv::imshow("Tracked Features", img_plot);
     cv::waitKey(1);
   }
   else {
-    ROS_WARN("Too few matches for twist calculation.\n");
+    ROS_WARN("Too few matches for homography. New keyframe!\n");
+    new_keyframe_ = true;
   }
-
-  // store info. of current image for next iteration
-  img.copyTo(kf_img_);
-  detector_->detect(kf_img_,kf_pts_,cv::noArray());
-  descriptor_->compute(kf_img_,kf_pts_,kf_desc_);
 }
 
 

@@ -40,10 +40,15 @@ private:
 
   // additional variables
   double t_prev_;
-  cv::Ptr<cv::Feature2D> detector_, descriptor_;
-  cv::Ptr<cv::DescriptorMatcher> matcher_;
-  std::vector<cv::KeyPoint> kf_pts_; // keframe points
-  cv::Mat kf_img_, kf_desc_; // keframe image and descriptors
+  bool new_keyframe_;
+  cv::Ptr<cv::Feature2D> detector_;
+  std::vector<cv::Point2f> kf_pts_; // keframe points
+  cv::Mat kf_img_; // keframe image and descriptors
+
+  // KLT parameters
+  cv::Size klt_win_size_;
+  int klt_max_level_;
+  cv::TermCriteria klt_term_crit_;
 
   // functions
   void imageCallback(const sensor_msgs::CompressedImageConstPtr &msg);
