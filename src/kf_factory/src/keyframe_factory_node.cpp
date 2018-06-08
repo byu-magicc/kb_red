@@ -146,7 +146,7 @@ void KeyframeFactory::depthCallback(const sensor_msgs::ImageConstPtr& msg)
     ROS_ERROR("[kf_factory %d] cv_bridge error: %s", __LINE__, e.what());  
     got_depth_ = false;
   }
-  depth_ = cv_ptr_->image;
+  cv_ptr_->image.convertTo(depth_, CV_16UC1);
   
 //  kf_msg.depth = *msg;
 }
@@ -257,13 +257,20 @@ void KeyframeFactory::tick()
     // Publish edge
     edge_pub_.publish(edge_msg);
     
+    // Pack up Node Info Message
+    relative_nav::NodeInfo node_msg;
+    node_msg.node_id = kf_id;
+    node_msg.keyframe_id = kf_id;
+    node_msg.header.stamp = ros::Time::now();
+    node_pub_.publish(node_msg);
+    
     // Pack up keyframe
     kf_msg.keyframe_id = kf_id;
     try
     {
       kf_msg.header.stamp = ros::Time::now();
       cv_bridge::CvImage(std_msgs::Header(), sensor_msgs::image_encodings::BGR8, rgb_).toImageMsg(kf_msg.rgb);
-      cv_bridge::CvImage(std_msgs::Header(), sensor_msgs::image_encodings::TYPE_32FC1, depth_).toImageMsg(kf_msg.depth);
+      cv_bridge::CvImage(std_msgs::Header(), sensor_msgs::image_encodings::TYPE_16UC1, depth_).toImageMsg(kf_msg.depth);
       ROS_INFO("T1");
   
       // Publish keyframe
@@ -283,6 +290,8 @@ void KeyframeFactory::tick()
     {
       gps_pub_.publish(cur_gps);
     }
+
+    
   }
   
   // Pack up relative state

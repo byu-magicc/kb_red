@@ -1,13 +1,19 @@
 <launch>
 
  <rosparam subst_value="True">
-    fabmap:         { visualise: false,
+    fabmap:         { visualise: true,
                       SelfMatchWindow: 5,
                       vocab:     $(find openfabmap)/codebooks/R01/vocab.yml,
                       clTree:    $(find openfabmap)/codebooks/R01/clTree.yml,
                       trainbows: $(find openfabmap)/codebooks/R01/trainbows.yml }
     geometry_check: { camera_info_rgb_path:   $(find relative_nav)/param/xtion_rgb.yaml ,
-                      camera_info_depth_path: $(find relative_nav)/param/xtion_depth.yaml }
+                      camera_info_depth_path: $(find relative_nav)/param/xtion_depth.yaml,
+                      visualize_all_matches: true,
+                      visualize_matches: true }
+    test_node: { camera_info_rgb_path:   $(find relative_nav)/param/xtion_rgb.yaml ,
+                      camera_info_depth_path: $(find relative_nav)/param/xtion_depth.yaml,
+                      visualize_all_matches: true,
+                      visualize_matches: true }
     rgbd_cache:     { camera_info_rgb_path:   $(find relative_nav)/param/xtion_rgb.yaml,
                       camera_info_depth_path: $(find relative_nav)/param/xtion_rgb.yaml }
     hex_map:        { visualization: true,
@@ -42,7 +48,7 @@
   <node name="fabmap"         pkg="openfabmap"          type="run_node"            	output="screen"/>
   <node name="geometry_check" pkg="geometry_check"      type="geometry_check_node" 	output="screen"/>
   <node name="rgbd_cache"     pkg="rgbd_cache"          type="rgbd_cache_node"     	output="screen"/>
-  <node name="hex_map"        pkg="hex_map"             type="hex_map_node"     	output="screen"/>
+  <node name="hex_map"        pkg="hex_map"             type="hex_map_node"     	output="log"/>
 
   <node name="record" pkg="rosbag" type="record" args="-O $(arg name) /encoder 
     /sonar /ins /command /camera/color/image_raw/compressed /keyframe /gps /node

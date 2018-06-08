@@ -1,16 +1,20 @@
 <launch>
 
+    <rosparam subst_value="True">
+        inertial_sense: { GPS_ref_lla: [40.250507, -111.649278, 1500] }
+    </rosparam>
+
   <!--Launch Realsense-->
-  <include file="$(find kb_utils)/launch/realsense.launch"/>
+  <!-- <include file="$(find kb_utils)/launch/realsense.launch"/> -->
 
   <!--InertialSense-->
-  <node name="inertial_sense" type="inertial_sense_node" pkg="inertial_sense">
+  <node name="inertial_sense" type="inertial_sense_node" pkg="inertial_sense" output="screen">
   </node>
 
   <!--KB Driver-->
-  <node name="teensy" pkg="kb_utils" type="kb_driver.py" args="/dev/ttyACM0"/>
+  <!-- <node name="teensy" pkg="kb_utils" type="kb_driver.py" args="/dev/ttyACM0"/> -->
  
-  <node name="record" pkg="robag" type="record" args="-O $(arg name) 
+  <node name="record" pkg="rosbag" type="record" args="-O $(arg name) 
     /encoder /sonar /ins /command /camera/color/image_raw/compressed /camera/depth/image_rect_raw/compressed" />
 
 </launch>
