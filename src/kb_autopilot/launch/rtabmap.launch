@@ -17,14 +17,14 @@
   <arg name="stereo"          default="false"/>
 
   <!-- Choose visualization -->
-  <arg name="rtabmapviz"              default="true" />
+  <arg name="rtabmapviz"              default="false" />
   <arg name="rviz"                    default="false" />
 
   <!-- Localization-only mode -->
   <arg name="localization"            default="true"/>
 
   <!-- sim time for convenience, if playing a rosbag -->
-  <arg name="use_sim_time"            default="true"/>
+  <arg name="use_sim_time"            default="false"/>
   <param if="$(arg use_sim_time)" name="use_sim_time" value="true"/>
 
   <!-- Corresponding config files -->
