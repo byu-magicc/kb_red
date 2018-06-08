@@ -11,7 +11,14 @@
   <node name="inertial_sense" type="inertial_sense_node" pkg="inertial_sense" output="screen">
   </node>
 
-  <node name="controller" pkg="kb_autopilot" type="controller.py" />
+  <node name="controller" pkg="kb_autopilot" type="controller.py" >
+    <remap from="controller_commands" to="avoid_commands"/>
+  </node>
+
+  <node name="obstacle_avoid" type="obstacle_avoider" pkg="kb_autopilot" output="screen">
+    <!-- <remap from="depth" to="???"/> -->
+  </node>
+
   <node name="path_follower" pkg="kb_autopilot" type="path_follower">
     <param name="K_PATH" value="0.2"/>
     <param name="CHI_INFTY" value="1.5"/>

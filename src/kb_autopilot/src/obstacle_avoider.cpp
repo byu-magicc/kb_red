@@ -1,4 +1,7 @@
 #include "obstacle_avoider.h"
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <cv_bridge/cv_bridge.h>
 
 namespace kb_autopilot
 {
@@ -29,7 +32,68 @@ void obstacle_avoider::vehicle_state_callback(const kb_autopilot::StateConstPtr 
 
 void obstacle_avoider::depth_callback(const sensor_msgs::ImagePtr &msg)
 {
-    ROS_INFO("Got a depth image");
+    if ((ros::Time::now() - last_update_).toSec() < 1.0/update_rate_)
+        return;
+    last_update_ = ros::Time::now();
+
+
+    cv_bridge::CvImagePtr cv_dpth_ptr;
+    try
+    {
+        cv_dpth_ptr = cv_bridge::toCvCopy(*msg, msg->encoding);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return;
+    }
+    int rows = cv_dpth_ptr->image.rows;
+    int cols = cv_dpth_ptr->image.cols;
+    cv::Mat cv_dpth = cv_dpth_ptr->image(cv::Rect(cols/4,rows/4,cols/2,rows/4));
+
+//    cv::imshow("here",cv_dpth);
+//    cv::waitKey(1);
+
+    double min(65535), max(0);
+    double total(0);
+    for(int i(0);i<cv_dpth.rows;i++)
+    {
+        for(int j(0);j<cv_dpth.cols;j++)
+        {
+            float d = cv_dpth.at<float>(i,j);
+            if(d > 0.01) // greater then min
+            {
+                if(d > max)
+                    max = d;
+                if(d < min)
+                    min = d;
+                if(d > 1000 && d < 2000)
+                {
+                    if(j < cv_dpth.cols/2) //right side
+                        total += d;
+                    else                //left side
+                        total -= d;
+                }
+            }
+
+        }
+    }
+    ROS_INFO_STREAM(total << " " << min);
+
+    if (total > 1000)
+        turn_right_ = true;
+    else
+        turn_right_ = false;
+
+    if (total < -1000)
+        turn_left_ = true;
+    else
+        turn_left_ = false;
+
+    if(min < 1000)
+        to_close_ = true;
+    else
+        to_close_ = false;
 }
 
 void obstacle_avoider::controller_commands_callback(const kb_autopilot::Controller_CommandsConstPtr &msgi)

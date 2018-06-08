@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_filters
   common_ros
   sensor_msgs
+  cv_bridge
 )
 find_package(Eigen3 REQUIRED)
 

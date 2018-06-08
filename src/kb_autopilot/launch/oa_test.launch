@@ -6,6 +6,19 @@
 
   <node name="keyframe_devide" type="keyframe_divide.py" pkg="kb_autopilot"/>
 
+  <node name="controller_command_publisher" pkg="rostopic" type="rostopic"
+      args="pub -r 10 controller_commands kb_autopilot/Controller_Commands '1.0' '0.0' '[0.0, 0.0, 0.0, 0.0]' 'false'"/>
+
+  <node name="state_publisher" pkg="rostopic" type="rostopic" output="screen"
+    args="pub /state kb_autopilot/State '{header: {seq: 0, stamp: 0, frame_id: 'none'},
+    p_north: 0,
+    p_east: 100,
+    psi: 0,
+    b_r: 0.0,
+    b_u: 0.0,
+    u: 0.0,
+    psi_deg: 0.0}'"/>
+
   <node name="obstacle_avoid" type="obstacle_avoider" pkg="kb_autopilot" output="screen"/>
 
 </launch>

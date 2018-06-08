@@ -28,6 +28,7 @@ private:
   void depth_callback(const sensor_msgs::ImagePtr &msg);
 
   double update_rate_;
+  ros::Time last_update_;
   double p_n_;
   double p_e_;
   bool state_init_;
