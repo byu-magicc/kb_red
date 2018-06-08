@@ -19,7 +19,7 @@ EKF::EKF() :
 
   // other parameters and constants
   t_prev_ = 0;
-  omega_v1_z_ = 0;
+  heading_rate_ = 0;
   is_driving_ = false;
   okay_to_update_ = false;
   B_.setZero();
@@ -35,6 +35,7 @@ EKF::EKF() :
 
   // set up ROS publishers
   state_pub_ = nh_.advertise<kb_autopilot::State>("/ekf_state", 1);
+  meas_pub_ = nh_.advertise<geometry_msgs::Vector3Stamped>("/gps_pos_head", 1);
 }
 
 
@@ -50,7 +51,7 @@ void EKF::encoderCallback(const kb_utils::EncoderConstPtr& msg)
 
   // check velocity to start the ekf
   if (!is_driving_)
-    if (fabs(v_meas) > 0.01)
+    if (fabs(v_meas) > 0.002)
       is_driving_ = true;
   
   // unpack state
@@ -67,7 +68,7 @@ void EKF::encoderCallback(const kb_utils::EncoderConstPtr& msg)
     f.setZero();
     f(0) = (v_meas+bv)*cos(psi);
     f(1) = (v_meas+bv)*sin(psi);
-    f(2) = omega_v1_z_;
+    f(2) = heading_rate_+br;
 
     // covariance kinematics
     Eigen::Matrix<double, 5, 5> A;
@@ -101,22 +102,23 @@ void EKF::insCallback(const nav_msgs::OdometryConstPtr& msg)
                              msg->pose.pose.orientation.x,
                              msg->pose.pose.orientation.y,
                              msg->pose.pose.orientation.z);
-    Eigen::Matrix3d R_v1_to_b = common::R_v2_to_b(q_i2b.roll())*common::R_v1_to_v2(q_i2b.pitch());
-    Eigen::Vector3d omega_b(msg->twist.twist.angular.x,
-                            msg->twist.twist.angular.y,
-                            msg->twist.twist.angular.z);
-    Eigen::Vector3d omega_v1 = R_v1_to_b.transpose()*omega_b;
-    omega_v1_z_ = omega_v1(2);
+    // Eigen::Matrix3d R_v1_to_b = common::R_v2_to_b(q_i2b.roll())*common::R_v1_to_v2(q_i2b.pitch());
+    // Eigen::Vector3d omega_b(msg->twist.twist.angular.x,
+    //                         msg->twist.twist.angular.y,
+    //                         msg->twist.twist.angular.z);
+    // Eigen::Vector3d omega_v1 = R_v1_to_b.transpose()*omega_b;
+    // heading_rate_ = omega_v1(2);
+    
+    // just use gyro z-axis measurement because using INS attitude estimate is not GPS-denied
+    heading_rate_ = msg->twist.twist.angular.z;
 
     // unpack estimated measurement of position and heading
-    Eigen::Vector3d z(msg->pose.pose.position.x,msg->pose.pose.position.y,q_i2b.yaw());
+    Eigen::Vector3d z(msg->pose.pose.position.x,msg->pose.pose.position.y,q_i2b.yaw()+M_PI);
     Eigen::Vector3d hx = x_.segment<3>(0);
 
     // residual error
     Eigen::Vector3d r = z-hx;
-
-    // make sure to use shortest angle in heading update
-    r(2) = wrapAngle(r(2));
+    r(2) = wrapAngle(r(2)); // make sure to use shortest angle in heading update
 
     // apply update
     Eigen::Matrix<double,5,3> K = P_*H_pose_.transpose()*(H_pose_*P_*H_pose_.transpose()+R_pose_).inverse();
@@ -125,6 +127,14 @@ void EKF::insCallback(const nav_msgs::OdometryConstPtr& msg)
 
     // don't allow more updates before propagation happens
     okay_to_update_ = false;
+
+    // build measurement topic to publish position and heading measurements
+    geometry_msgs::Vector3Stamped gps_msg;
+    gps_msg.header = msg->header;
+    gps_msg.vector.x = z(0);
+    gps_msg.vector.y = z(1);
+    gps_msg.vector.z = wrapAngle(z(2))*180/M_PI;
+    meas_pub_.publish(gps_msg);
   }
 }
 

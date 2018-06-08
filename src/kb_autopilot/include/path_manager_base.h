@@ -17,6 +17,7 @@
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
+#include <std_msgs/Bool.h>
 #include <sensor_msgs/FluidPressure.h>
 #include <math.h>
 #include <Eigen/Eigen>
@@ -33,9 +34,6 @@ protected:
   struct waypoint_s
   {
     float w[2];
-    // float chi_d;
-    // bool  chi_valid;
-    // float Va_d;
     float u_d;
   };
 
@@ -47,7 +45,6 @@ protected:
   {
     float pn;               /** position north */
     float pe;               /** position east */
-    // float h;                /** altitude */
     float psi;              /** course angle */
   };
 
@@ -75,6 +72,7 @@ private:
   ros::NodeHandle nh_private_;
   ros::Subscriber vehicle_state_sub_;     /**< vehicle state subscription */
   ros::Subscriber new_waypoint_sub_;      /**< new waypoint subscription */
+  ros::Subscriber print_list_sub_;
   ros::Publisher  current_path_pub_;      /**< controller commands publication */
 
   struct params_s params_;
@@ -87,6 +85,7 @@ private:
   void vehicle_state_callback(const kb_autopilot::StateConstPtr &msg);
   bool state_init_;
   void new_waypoint_callback(const kb_autopilot::Waypoint &msg);
+  void print_waypoints_callback(const std_msgs::Bool msg);
   void current_path_publish(const ros::TimerEvent &);
 };
 } //end namespace
