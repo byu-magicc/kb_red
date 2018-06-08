@@ -11,12 +11,12 @@ int main(int argc, char **argv)
   ros::Publisher waypointPublisher = nh_.advertise<kb_autopilot::Waypoint>("waypoint_path", 10);
 
   float u = 1.5;
-  float pn1 = -231.0;
-  float pe1 = -90.5;
+  float pn1 = -230.0;
+  float pe1 = -100.0;
   float wps[3*num_waypoints] =
   {
     pn1 - 10, pe1, u,
-    0.1, 0.1, u,//pn1, pe1, u,
+    pn1, pe1, u,
     pn1, pe1 + 10, u,
     pn1 - 10, pe1 + 10, u,
   };

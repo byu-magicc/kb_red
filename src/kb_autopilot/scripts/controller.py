@@ -139,7 +139,7 @@ class Controller:
     	    self.integrator_v = self.integrator_v + dt/self.Ki_v * (self.v_command - u)
 
         vel = Command()
-        vel.steer = self.psi_command
+        vel.steer = -self.psi_command
         vel.throttle = self.v_command
 
         self.command_pub.publish(vel)
