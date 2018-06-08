@@ -78,7 +78,6 @@ void obstacle_avoider::depth_callback(const sensor_msgs::ImagePtr &msg)
 
         }
     }
-    ROS_INFO_STREAM(total << " " << min);
 
     if (total > 1000)
         turn_right_ = true;
