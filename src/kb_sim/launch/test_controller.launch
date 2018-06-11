@@ -1,0 +1,34 @@
+<!-- This is a launch file that runs the bare minimum requirements to get -->
+<!-- gazebo running.  It requires a relative_nav::Command on /command -->
+<!-- to move the hex, and outputs imu, altimeter, laserscan and RGBD images -->
+<!-- as well as a relative_nav::FilterState message on /global_state  -->
+<!-- a geometry_msgs::StampedTransform on /mocap to imitate motion capture -->
+
+
+<launch>
+  <arg name="world_name"    default="$(find kb_sim)/worlds/urban.2.world"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/> 
+    <arg name="paused" value="true"/>
+    <arg name="verbose" value="true"/>
+  </include>
+
+  <!-- Spawn the ground vehicle -->
+  <include file="$(find kb_sim)/launch/vehicles.launch">
+    <arg name="vehicle" value="donkey" />
+    <arg name="initial_x" value="-50.0" />
+    <arg name="initial_y" value="10.0" />
+    <arg name="initial_z" value="1.0" />
+    <arg name="initial_heading" value="3.14" />
+    <arg name="path_frequency" value="0.01" />
+    <arg name="path_orientation" value="1.57" />
+    <arg name="path_size_x" value="200.0" />
+    <arg name="path_size_y" value="300.0" />
+    <arg name="radio_active" value="1" />
+  </include>
+
+
+
+
+</launch>

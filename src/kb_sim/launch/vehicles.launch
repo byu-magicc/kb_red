@@ -1,0 +1,29 @@
+<launch>
+
+    <!-- Spawn the ground vehicles -->
+    <arg name="vehicle" default="atv0" />
+    <arg name="initial_x" default="0.0" />
+    <arg name="initial_y" default="0.0" />
+    <arg name="initial_z" default="0.0" />
+    <arg name="initial_heading" default="0.0" />
+    <arg name="path_frequency" default="0.01" />
+    <arg name="path_orientation" default="0.0" />
+    <arg name="path_size_x" default="10.0" />
+    <arg name="path_size_y" default="10.0" />
+    <arg name="radio_active" default="0" />
+    <arg name="throw_radio_probability" default=".5"/>
+    <arg name="waypoint_file" default="vehicle_waypoints.yaml"/>
+
+    <group ns="$(arg vehicle)">
+        <param name="polaris_vehicle" textfile="$(find kb_sim)/models/polaris_ranger_xp900/model.sdf" />
+        <node name="$(arg vehicle)_spawn_vehicle" pkg="gazebo_ros"
+          type="spawn_model" respawn="false" output="screen"
+          args="-gazebo -model $(arg vehicle) -param polaris_vehicle -x $(arg initial_x)
+                -y $(arg initial_y) -z $(arg initial_z) -Y $(arg initial_heading)"/>
+
+        <!-- <node name="$(arg vehicle)_controller" pkg="kb_sim" type="vehicle_controller.py"  args="$(arg vehicle)" output="screen">
+          <rosparam file="$(find kb_sim)/launch/$(arg waypoint_file)" command="load"/>
+        </node> -->
+    </group>
+
+</launch>
