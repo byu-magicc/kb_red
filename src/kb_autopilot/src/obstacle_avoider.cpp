@@ -51,8 +51,13 @@ void obstacle_avoider::depth_callback(const sensor_msgs::ImagePtr &msg)
     int cols = cv_dpth_ptr->image.cols;
     cv::Mat cv_dpth = cv_dpth_ptr->image(cv::Rect(cols/4,rows/4,cols/2,rows/4));
 
-//    cv::imshow("here",cv_dpth);
-//    cv::waitKey(1);
+    cv::Mat color;
+    cv::cvtColor(cv_dpth_ptr->image, color, cv::COLOR_GRAY2BGR);
+
+    cv::rectangle(color, cv::Rect(cols/4,rows/4,cols/2,rows/4), cv::Scalar(150,0,0));
+
+    cv::imshow("here",color);
+    cv::waitKey(1);
 
     double min(65535), max(0);
     double total(0);
@@ -70,9 +75,9 @@ void obstacle_avoider::depth_callback(const sensor_msgs::ImagePtr &msg)
                 if(d > 1000 && d < 2000)
                 {
                     if(j < cv_dpth.cols/2) //right side
-                        total += d;
+                        total += 1000/d;
                     else                //left side
-                        total -= d;
+                        total -= 1000/d;
                 }
             }
 
