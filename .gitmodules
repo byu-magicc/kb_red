@@ -1,6 +1,6 @@
 [submodule "src/kbhackathon"]
 	path = src/kbhackathon
-	url = git@github.com:drinkdhmo/kbhackathon.git
+	url = https://github.com/byu-magicc/kbhackathon.git
 [submodule "src/timed_roslaunch"]
 	path = src/timed_roslaunch
 	url = https://github.com/MoriKen254/timed_roslaunch.git
