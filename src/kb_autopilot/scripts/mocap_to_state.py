@@ -14,13 +14,13 @@ from geometry_msgs.msg import PoseStamped
 
 class Mocap_To_State(object):
 
-    def __init__(self):
+    def __init__(self, vehicle_name):
         """
         translate mocap into state
         """
         self.vel = 0;
-        self.state_pub = rospy.Publisher("state", State, queue_size=1)
-        self.cmd_sub = rospy.Subscriber("mocap/kbredcar/pose", PoseStamped, self.pub_state)
+        self.state_pub = rospy.Publisher("mocap", State, queue_size=1)
+        self.cmd_sub = rospy.Subscriber("vrpn_client_node/{}/pose".format(vehicle_name), PoseStamped, self.pub_state)
         self.enc_sub = rospy.Subscriber("encoder", Encoder, self.update_encoder)
 
     def update_encoder(self, msg):
@@ -29,8 +29,8 @@ class Mocap_To_State(object):
     def pub_state(self, msg):
         state_msg = State()
         state_msg.header = msg.header
-        state_msg.p_north = -msg.pose.position.x
-        state_msg.p_east = -msg.pose.position.z
+        state_msg.p_north = msg.pose.position.z
+        state_msg.p_east = -msg.pose.position.x
         w = msg.pose.orientation.w
         y = msg.pose.orientation.x
         z = msg.pose.orientation.y
@@ -46,7 +46,7 @@ class Mocap_To_State(object):
         # x_f = w_r*x + y_r*z
         # y_f = w_r*y + y_r*w
         # z_f = w_r*z - y_r*x
-        state_msg.psi = math.atan2(2*(w*z + x*y), 1 - 2*(y*y + z*z)) + np.pi/2
+        state_msg.psi = -math.atan2(2*(w*z + x*y), 1 - 2*(y*y + z*z))
         # val = 2*(w*y - x*z)
         # if (math.fabs(val) > 1):
         #     state_msg.psi = np.sign(val)*np.pi/2;
@@ -69,12 +69,13 @@ def main():
     arg_fmt = argparse.RawDescriptionHelpFormatter
     parser = argparse.ArgumentParser(formatter_class=arg_fmt,
                                     description=main.__doc__)
+    parser.add_argument('vehicle_name', type=str, default='')
     args = parser.parse_args(rospy.myargv()[1:])
 
     print("Initializing node... ")
-    rospy.init_node("mocap_to_statue", log_level=rospy.DEBUG)
+    rospy.init_node("mocap_to_state", log_level=rospy.DEBUG)
 
-    mocap_to_state = Mocap_To_State()
+    mocap_to_state = Mocap_To_State(args.vehicle_name)
     rospy.on_shutdown(mocap_to_state.clean_shutdown)
     mocap_to_state.run()
 
